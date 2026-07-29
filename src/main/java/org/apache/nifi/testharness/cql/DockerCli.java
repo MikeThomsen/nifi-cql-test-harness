@@ -36,16 +36,22 @@ final class DockerCli {
         run("rm", "-f", containerId);
     }
 
-    /** {@code docker run -d --name <name> -p <containerPort> <mountArgs...> <image>}. Returns the new container's id. */
-    static String runDetached(final String image, final String name, final int containerPort, final List<String> mountArgs)
+    /**
+     * {@code docker run --rm -d --name <name> -p [<hostPort>:]<containerPort> <mountArgs...> <image>}. Returns
+     * the new container's id. {@code --rm} only cleans up once the container is later stopped (e.g. via
+     * {@code docker stop}) - it does not stop the container when this process exits, which is still the point
+     * of running detached. If {@code hostPort} is null, Docker assigns a random available host port.
+     */
+    static String runDetached(final String image, final String name, final int containerPort, final Integer hostPort, final List<String> mountArgs)
             throws IOException, InterruptedException {
         final List<String> args = new ArrayList<>();
         args.add("run");
+        args.add("--rm");
         args.add("-d");
         args.add("--name");
         args.add(name);
         args.add("-p");
-        args.add(String.valueOf(containerPort));
+        args.add(hostPort == null ? String.valueOf(containerPort) : (hostPort + ":" + containerPort));
         args.addAll(mountArgs);
         args.add(image);
         return run(args.toArray(new String[0]));

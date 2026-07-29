@@ -1,7 +1,9 @@
 package org.apache.nifi.testharness.cql;
 
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Spec;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -20,10 +22,35 @@ import java.util.concurrent.Callable;
 @Command(
         name = "start",
         mixinStandardHelpOptions = true,
-        description = "Launch a Cassandra or ScyllaDB container for validating nifi-cql-bundle. The container "
-                + "is left running after this command exits."
+        description = {
+                "Launch a Cassandra or ScyllaDB container for validating nifi-cql-bundle.",
+                "",
+                "The container is started detached with --rm, so a later `docker stop` cleans it up automatically;",
+                "it is NOT stopped when this command exits, which is the point - it is meant to be left running",
+                "while you point NiFi at it. Print the report at the end of a run for the contact point, any TLS",
+                "material generated, and the exact command to remove the container yourself.",
+                "",
+                "By default the CQL port (9042) is published to a random available host port; use --host-port to",
+                "pin a specific host port instead. Use --with-ssl to generate one-way or two-way TLS material and",
+                "enable it on the container, and --with-test-user to provision username/password authentication",
+                "with the given credentials.",
+                "",
+                "At least one option is required - bare `start` with nothing after it prints this help and exits",
+                "with an error, rather than silently launching a plain, unauthenticated, no-TLS Cassandra container."
+        },
+        footer = {
+                "",
+                "Examples:",
+                "  start --engine cassandra",
+                "  start --engine scylladb --container-name my-scylla --host-port 9042",
+                "  start --with-ssl=two-way --with-test-user --username admin --password secret",
+                "  start --specific-image cassandra:5.0-beta1"
+        }
 )
 final class StartCommand implements Callable<Integer> {
+
+    @Spec
+    private CommandSpec spec;
 
     // Fixed, non-secret bootstrap identity for ScyllaDB 2026.2+, which (unlike Cassandra) no longer provisions
     // a default superuser automatically. Reused as-is from ScyllaAuthenticationIT in nifi-cql-bundle: the
@@ -61,8 +88,19 @@ final class StartCommand implements Callable<Integer> {
     @Option(names = "--password", description = "Password to create when --with-test-user is set.")
     private String password;
 
+    @Option(names = "--host-port", description = "Host port to map to the container's CQL port (" + CQL_PORT
+            + "). If omitted, Docker assigns a random available port.")
+    private Integer requestedHostPort;
+
+    @Option(names = "--container-name", description = "Name to give the new Docker container. Default: an auto-generated name.")
+    private String containerNameOption;
+
     @Override
     public Integer call() throws Exception {
+        if (spec.commandLine().getParseResult().matchedOptions().isEmpty()) {
+            spec.commandLine().usage(System.err);
+            return 2;
+        }
         if (specificImage != null && !engine.isCompatibleImage(specificImage)) {
             System.err.println("--specific-image '" + specificImage + "' does not look like a " + engine + " image (expected it to contain \""
                     + engine.imageNameToken() + "\"-like content, e.g. \"" + engine.defaultImage() + "\")");
@@ -78,7 +116,9 @@ final class StartCommand implements Callable<Integer> {
         }
 
         final String image = specificImage != null ? specificImage : engine.defaultImage();
-        final String containerName = "nifi-cql-harness-" + engine.name().toLowerCase() + "-" + randomHex(4);
+        final String containerName = containerNameOption != null
+                ? containerNameOption
+                : "nifi-cql-harness-" + engine.name().toLowerCase() + "-" + randomHex(4);
         final Path outputDirectory = Path.of("nifi-cql-test-harness-output", containerName);
         Files.createDirectories(outputDirectory);
 
@@ -120,13 +160,14 @@ final class StartCommand implements Callable<Integer> {
         mountArgs.add(patchedConfigPath.toAbsolutePath() + ":" + engine.configContainerPath());
 
         System.out.println("Starting container " + containerName + " (" + image + ") ...");
-        final String containerId = DockerCli.runDetached(image, containerName, CQL_PORT, mountArgs);
+        final String containerId = DockerCli.runDetached(image, containerName, CQL_PORT, requestedHostPort, mountArgs);
 
-        final int hostPort = DockerCli.getMappedPort(containerId, CQL_PORT);
-        final String contactPoint = "127.0.0.1:" + hostPort;
+        final int mappedHostPort = DockerCli.getMappedPort(containerId, CQL_PORT);
+        System.out.println("Mapped host port " + mappedHostPort + " -> container CQL port " + CQL_PORT);
+        final String contactPoint = "127.0.0.1:" + mappedHostPort;
 
         System.out.println("Waiting for " + contactPoint + " to accept connections ...");
-        waitForPort("127.0.0.1", hostPort, READINESS_TIMEOUT);
+        waitForPort("127.0.0.1", mappedHostPort, READINESS_TIMEOUT);
 
         if (withTestUser) {
             System.out.println("Creating role '" + username + "' ...");
@@ -195,7 +236,8 @@ final class StartCommand implements Callable<Integer> {
         }
         System.out.println("  Output dir:    " + outputDirectory.toAbsolutePath());
         System.out.println();
-        System.out.println("The container keeps running after this process exits. Stop it later with:");
-        System.out.println("  docker rm -f " + containerName);
+        System.out.println("The container keeps running after this process exits (started with --rm, so it is");
+        System.out.println("removed automatically once stopped). Stop it later with:");
+        System.out.println("  docker stop " + containerName);
     }
 }
