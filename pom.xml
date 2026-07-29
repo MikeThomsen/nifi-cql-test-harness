@@ -16,6 +16,7 @@
         <scylladb.driver.version>4.19.2.0</scylladb.driver.version>
         <picocli.version>4.7.7</picocli.version>
         <nifi.security.cert.builder.version>2.10.0</nifi.security.cert.builder.version>
+        <main.class>org.apache.nifi.testharness.cql.Main</main.class>
     </properties>
 
     <dependencies>
@@ -24,6 +25,19 @@
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
             <version>${picocli.version}</version>
+        </dependency>
+        <!--
+          Apache License 2.0. Annotation processor that generates GraalVM reflect-config.json for every
+          @Command class (Main, StartCommand, ...) at compile time - without it, native-image only knows how
+          to reflectively instantiate picocli's own internals (from the downloaded reachability metadata), not
+          this project's command classes, and `start` fails at runtime with NoSuchMethodException even though
+          the native-image build itself succeeds. provided scope: only needed at compile time.
+        -->
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli-codegen</artifactId>
+            <version>${picocli.version}</version>
+            <scope>provided</scope>
         </dependency>
         <!--
           Apache License 2.0. Self-signed and CA-signed X.509 certificate/keystore generation for
@@ -37,6 +51,46 @@
             <version>${nifi.security.cert.builder.version}</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>${main.class}</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.15.0</version>
+                <configuration>
+                    <!--
+                      Explicit annotationProcessorPaths, rather than relying on picocli-codegen just being on
+                      the compile classpath: classpath-based implicit annotation processor discovery isn't
+                      firing with this javac/maven-compiler-plugin combination, so picocli-codegen's
+                      reflect-config.json for @Command classes never got generated without this.
+                    -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>info.picocli</groupId>
+                            <artifactId>picocli-codegen</artifactId>
+                            <version>${picocli.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                    <compilerArgs>
+                        <arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <profiles>
         <!--
@@ -75,7 +129,33 @@
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
                         <version>1.1.6</version>
-                        <extensions>true</extensions>
+                        <!--
+                          Works around a classloading gap in some Maven distributions: the plugin expects to
+                          import org.apache.maven.shared.utils.logging.MessageUtils from Maven core's
+                          "maven.api" realm, but not every Maven build exports that class there even though the
+                          jar is physically present in Maven's own lib/. Depending on it directly puts the class
+                          in the plugin's own classloader instead, avoiding the cross-realm import entirely.
+                        -->
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.apache.maven.shared</groupId>
+                                <artifactId>maven-shared-utils</artifactId>
+                                <version>3.4.2</version>
+                            </dependency>
+                        </dependencies>
+                        <configuration>
+                            <mainClass>${main.class}</mainClass>
+                            <!--
+                              The ScyllaDB/Cassandra driver's shaded Guava reaches
+                              UnsignedBytes$LexicographicalComparatorHolder$PureJavaComparator (via
+                              SniEndPoint's static sort comparator) during TrustManagerFactory's default-algorithm
+                              static init, which native-image otherwise defers to run time by default - this
+                              build arg is GraalVM's own suggested fix for the resulting UnsupportedFeatureException.
+                            -->
+                            <buildArgs>
+                                <buildArg>--initialize-at-build-time=com.datastax.oss.driver.shaded.guava.common.primitives.UnsignedBytes$LexicographicalComparatorHolder$PureJavaComparator</buildArg>
+                            </buildArgs>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>build-native</id>
