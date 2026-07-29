@@ -15,6 +15,7 @@
         <cassandra.driver.version>4.19.3</cassandra.driver.version>
         <scylladb.driver.version>4.19.2.0</scylladb.driver.version>
         <picocli.version>4.7.7</picocli.version>
+        <nifi.security.cert.builder.version>2.10.0</nifi.security.cert.builder.version>
     </properties>
 
     <dependencies>
@@ -23,6 +24,17 @@
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
             <version>${picocli.version}</version>
+        </dependency>
+        <!--
+          Apache License 2.0. Self-signed and CA-signed X.509 certificate/keystore generation for
+          the `start` subcommand's SSL setup (one-way and two-way TLS). Transitively brings in
+          Bouncy Castle (bcpkix-jdk18on, bcprov-jdk18on) under the Bouncy Castle License
+          (MIT-style) - see NOTICE.
+        -->
+        <dependency>
+            <groupId>org.apache.nifi</groupId>
+            <artifactId>nifi-security-cert-builder</artifactId>
+            <version>${nifi.security.cert.builder.version}</version>
         </dependency>
     </dependencies>
 
