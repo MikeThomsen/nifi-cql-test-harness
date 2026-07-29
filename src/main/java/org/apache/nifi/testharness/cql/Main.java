@@ -2,6 +2,7 @@ package org.apache.nifi.testharness.cql;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.HelpCommand;
 
 @Command(
         name = "nifi-cql-test-harness",
@@ -14,9 +15,10 @@ import picocli.CommandLine.Command;
                 "two-way) and/or username/password authentication already configured, and reports the contact",
                 "point and any generated credentials/certificates you need to point nifi-cql-bundle at it.",
                 "",
-                "Run 'nifi-cql-test-harness start --help' for the full set of options."
+                "Run 'nifi-cql-test-harness start --help' or 'nifi-cql-test-harness help start' for the full set",
+                "of options."
         },
-        subcommands = StartCommand.class
+        subcommands = {StartCommand.class, HelpCommand.class}
 )
 public class Main implements Runnable {
 
