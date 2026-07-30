@@ -36,8 +36,10 @@ concern - listed here for provenance/audit purposes.
 
 ## Code written for this project
 
-`RegisterTypeCommand.java` and `RecordUdtGenerator.java` (the `register-type` command, Avro schema
-file -> CQL `CREATE TYPE` statement(s)) are **original** code, not ported from anywhere -
+`RegisterTypeCommand.java`/`RecordUdtGenerator.java` (the `register-type` command, Avro schema file
+-> CQL `CREATE TYPE` statement(s)) and `GenerateTableCommand.java`/`SnakeCaseConverter.java` (the
+`generate-table` command, Avro schema file -> CQL `CREATE TABLE` statement, reusing
+`RecordUdtGenerator` for any nested UDTs) are **original** code, not ported from anywhere -
 nifi-cql-bundle only ever converts CQL to Avro/Record, never the reverse. They're listed here only
 because they're additional consumers of the `nifi-record`/`nifi-avro-record-utils` dependencies
 above (via `AvroTypeUtil.createSchema`, the same call `CqlRecordSchemaMapper` uses in the opposite

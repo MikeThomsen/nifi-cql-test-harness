@@ -32,6 +32,12 @@ final class RecordUdtGenerator {
     private RecordUdtGenerator() {
     }
 
+    /** The result of resolving a schema's own top-level fields: any nested UDTs those fields need
+     * (dependency order, ready to run ahead of anything that references the schema itself), plus
+     * each top-level field's resolved CQL type, keyed by its original (not snake_cased) field name. */
+    record FieldResolution(List<String> nestedCreateTypeStatements, Map<String, String> cqlTypesByFieldName) {
+    }
+
     /**
      * @param schema the top-level record schema to convert
      * @param keyspace if non-null, every generated statement is qualified with this keyspace; if
@@ -42,6 +48,25 @@ final class RecordUdtGenerator {
         final Set<String> typesCurrentlyBeingResolved = new LinkedHashSet<>();
         resolveRecordType(schema, keyspace, statementsByTypeName, typesCurrentlyBeingResolved);
         return new ArrayList<>(statementsByTypeName.values());
+    }
+
+    /**
+     * Resolves {@code schema}'s own fields to CQL types without wrapping the schema itself in a UDT -
+     * for a caller (like {@code generate-table}) that wants the fields as table columns rather than as
+     * a nested type. Any field that's itself a nested record still becomes its own UDT, exactly as in
+     * {@link #generateCreateTypeStatements}; only the outermost level is treated differently.
+     */
+    static FieldResolution resolveFields(final RecordSchema schema, final String keyspace) {
+        final Map<String, String> statementsByTypeName = new LinkedHashMap<>();
+        final Set<String> typesCurrentlyBeingResolved = new LinkedHashSet<>();
+        final Map<String, String> cqlTypesByFieldName = new LinkedHashMap<>();
+
+        for (final RecordField field : schema.getFields()) {
+            final String cqlType = resolveCqlType(field.getDataType(), field.getFieldName(), keyspace, statementsByTypeName, typesCurrentlyBeingResolved);
+            cqlTypesByFieldName.put(field.getFieldName(), cqlType);
+        }
+
+        return new FieldResolution(new ArrayList<>(statementsByTypeName.values()), cqlTypesByFieldName);
     }
 
     private static String resolveRecordType(final RecordSchema schema, final String keyspace,
