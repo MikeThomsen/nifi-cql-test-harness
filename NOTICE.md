@@ -11,8 +11,8 @@ tracks the license and provenance of its dependencies for reference, not as an A
 | `org.apache.cassandra:java-driver-core` (`cassandra` profile) | 4.19.3 | Apache License 2.0 | The former DataStax OSS Java driver, donated to and now maintained by the Apache Cassandra project. The legacy `com.datastax.oss:java-driver-core` coordinate is frozen at 4.17.0 and no longer receives updates. |
 | `com.scylladb:java-driver-core` (`scylladb` profile) | 4.19.2.0 | Apache License 2.0 | ScyllaDB's fork of the DataStax OSS driver; same `com.datastax.oss.driver.*` Java package as the Cassandra driver above. |
 | `org.apache.nifi:nifi-security-cert-builder` | 2.10.0 | Apache License 2.0 | Self-signed and CA-signed X.509 certificate builder, used for `start --with-ssl`. Same helper class (`StandardCertificateBuilder`) the nifi-cql-bundle integration tests use. |
-| `org.apache.nifi:nifi-record` | 2.10.0 | Apache License 2.0 | The `Record`/`RecordSchema`/`RecordFieldType` model the ported conversion code in `org.apache.nifi.testharness.cql.convert` operates on - see "Code derived from nifi-cql-bundle" below. |
-| `org.apache.nifi:nifi-avro-record-utils` | 2.10.0 | Apache License 2.0 | Provides `AvroTypeUtil`, used by `CqlRecordSchemaMapper` to convert an Avro `Schema` into a `RecordSchema`. Transitively brings in Avro itself. |
+| `org.apache.nifi:nifi-record` | 2.10.0 | Apache License 2.0 | The `Record`/`RecordSchema`/`RecordFieldType` model used both by the ported conversion code in `org.apache.nifi.testharness.cql.convert` (see "Code derived from nifi-cql-bundle" below) and by `register-type`/`RecordUdtGenerator` (original code - see "Code written for this project" below). |
+| `org.apache.nifi:nifi-avro-record-utils` | 2.10.0 | Apache License 2.0 | Provides `AvroTypeUtil`, used by `CqlRecordSchemaMapper` (CQL -> Avro -> RecordSchema) and by `register-type` (Avro file -> RecordSchema) to convert between an Avro `Schema` and a `RecordSchema`. Transitively brings in Avro itself. |
 
 ## Code derived from nifi-cql-bundle
 
@@ -33,6 +33,15 @@ concern - listed here for provenance/audit purposes.
 | `convert/CqlRecordSchemaMapper.java` | `CassandraCQLExecutionService#createSchema` (plus its `AvroTypeUtil.createSchema` call in `#query`) |
 | `convert/CqlBindValueConverter.java` | `CassandraCQLExecutionService#convertForCqlType` / `#getBindValues` |
 | `convert/CqlRowConverter.java` | The row-to-`MapRecord` loop in `CassandraCQLExecutionService#query` |
+
+## Code written for this project
+
+`RegisterTypeCommand.java` and `RecordUdtGenerator.java` (the `register-type` command, Avro schema
+file -> CQL `CREATE TYPE` statement(s)) are **original** code, not ported from anywhere -
+nifi-cql-bundle only ever converts CQL to Avro/Record, never the reverse. They're listed here only
+because they're additional consumers of the `nifi-record`/`nifi-avro-record-utils` dependencies
+above (via `AvroTypeUtil.createSchema`, the same call `CqlRecordSchemaMapper` uses in the opposite
+direction), not because they're derived code like the table above.
 
 ## Notable transitive dependencies
 

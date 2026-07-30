@@ -21,7 +21,6 @@ import java.util.concurrent.Callable;
 
 @Command(
         name = "start",
-        mixinStandardHelpOptions = true,
         description = {
                 "Launch a Cassandra or ScyllaDB container for validating nifi-cql-bundle.",
                 "",

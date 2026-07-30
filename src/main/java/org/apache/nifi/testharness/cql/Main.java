@@ -3,10 +3,10 @@ package org.apache.nifi.testharness.cql;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
+import picocli.CommandLine.Option;
 
 @Command(
         name = "nifi-cql-test-harness",
-        mixinStandardHelpOptions = true,
         version = "nifi-cql-test-harness 1.0.0-SNAPSHOT",
         description = {
                 "CLI utility for setting up Cassandra and ScyllaDB to validate nifi-cql-bundle.",
@@ -15,12 +15,15 @@ import picocli.CommandLine.HelpCommand;
                 "two-way) and/or username/password authentication already configured, and reports the contact",
                 "point and any generated credentials/certificates you need to point nifi-cql-bundle at it.",
                 "",
-                "Run 'nifi-cql-test-harness start --help' or 'nifi-cql-test-harness help start' for the full set",
-                "of options."
+                "Run 'nifi-cql-test-harness help start' (or 'help <command>' generally) for the full set of",
+                "options for a given command."
         },
-        subcommands = {StartCommand.class, HelpCommand.class}
+        subcommands = {StartCommand.class, RegisterTypeCommand.class, HelpCommand.class}
 )
 public class Main implements Runnable {
+
+    @Option(names = {"-V", "--version"}, versionHelp = true, description = "Print version information and exit.")
+    private boolean versionRequested;
 
     @Override
     public void run() {
