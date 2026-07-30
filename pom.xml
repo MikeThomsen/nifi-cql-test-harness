@@ -17,6 +17,7 @@
         <picocli.version>4.7.7</picocli.version>
         <nifi.security.cert.builder.version>2.10.0</nifi.security.cert.builder.version>
         <nifi.record.version>2.10.0</nifi.record.version>
+        <datafaker.version>2.7.0</datafaker.version>
         <main.class>org.apache.nifi.testharness.cql.Main</main.class>
     </properties>
 
@@ -71,6 +72,16 @@
             <groupId>org.apache.nifi</groupId>
             <artifactId>nifi-avro-record-utils</artifactId>
             <version>${nifi.record.version}</version>
+        </dependency>
+        <!--
+          Apache License 2.0. Fake data generation for `generate-test-data`. The original
+          com.github.javafaker:javafaker is unmaintained (last release 2020); DataFaker is its
+          actively maintained successor - see NOTICE.
+        -->
+        <dependency>
+            <groupId>net.datafaker</groupId>
+            <artifactId>datafaker</artifactId>
+            <version>${datafaker.version}</version>
         </dependency>
     </dependencies>
 

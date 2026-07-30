@@ -13,6 +13,7 @@ tracks the license and provenance of its dependencies for reference, not as an A
 | `org.apache.nifi:nifi-security-cert-builder` | 2.10.0 | Apache License 2.0 | Self-signed and CA-signed X.509 certificate builder, used for `start --with-ssl`. Same helper class (`StandardCertificateBuilder`) the nifi-cql-bundle integration tests use. |
 | `org.apache.nifi:nifi-record` | 2.10.0 | Apache License 2.0 | The `Record`/`RecordSchema`/`RecordFieldType` model used both by the ported conversion code in `org.apache.nifi.testharness.cql.convert` (see "Code derived from nifi-cql-bundle" below) and by `register-type`/`RecordUdtGenerator` (original code - see "Code written for this project" below). |
 | `org.apache.nifi:nifi-avro-record-utils` | 2.10.0 | Apache License 2.0 | Provides `AvroTypeUtil`, used by `CqlRecordSchemaMapper` (CQL -> Avro -> RecordSchema) and by `register-type` (Avro file -> RecordSchema) to convert between an Avro `Schema` and a `RecordSchema`. Transitively brings in Avro itself. |
+| `net.datafaker:datafaker` | 2.7.0 | Apache License 2.0 | Fake data generation for `generate-test-data`. The original `com.github.javafaker:javafaker` is unmaintained (last release 2020); DataFaker is its actively maintained successor. |
 
 ## Code derived from nifi-cql-bundle
 
@@ -37,13 +38,16 @@ concern - listed here for provenance/audit purposes.
 ## Code written for this project
 
 `RegisterTypeCommand.java`/`RecordUdtGenerator.java` (the `register-type` command, Avro schema file
--> CQL `CREATE TYPE` statement(s)) and `GenerateTableCommand.java`/`SnakeCaseConverter.java` (the
+-> CQL `CREATE TYPE` statement(s)), `GenerateTableCommand.java`/`SnakeCaseConverter.java` (the
 `generate-table` command, Avro schema file -> CQL `CREATE TABLE` statement, reusing
-`RecordUdtGenerator` for any nested UDTs) are **original** code, not ported from anywhere -
-nifi-cql-bundle only ever converts CQL to Avro/Record, never the reverse. They're listed here only
-because they're additional consumers of the `nifi-record`/`nifi-avro-record-utils` dependencies
-above (via `AvroTypeUtil.createSchema`, the same call `CqlRecordSchemaMapper` uses in the opposite
-direction), not because they're derived code like the table above.
+`RecordUdtGenerator` for any nested UDTs), and `GenerateTestDataCommand.java`/`TestDataGenerator.java`/
+`CqlLiteralFormatter.java` (the `generate-test-data` command, Avro schema file -> fake `Record`s
+written live or dumped as literal CQL `INSERT` statements) are **original** code, not ported from
+anywhere - nifi-cql-bundle only ever converts CQL to Avro/Record, never the reverse. They're listed
+here only because they're additional consumers of the `nifi-record`/`nifi-avro-record-utils`
+dependencies above (via `AvroTypeUtil.createSchema`, the same call `CqlRecordSchemaMapper` uses in
+the opposite direction) and, for the `generate-test-data` files, of `net.datafaker:datafaker` above -
+not because they're derived code like the table above.
 
 ## Notable transitive dependencies
 
@@ -61,6 +65,9 @@ direction), not because they're derived code like the table above.
 | `commons-io:commons-io` | 2.22.0 | Apache License 2.0 | `nifi-avro-record-utils` |
 | `org.apache.commons:commons-compress` | 1.28.0 | Apache License 2.0 | `nifi-avro-record-utils` |
 | `com.github.ben-manes.caffeine:caffeine` | 3.2.4 | Apache License 2.0 | `nifi-avro-record-utils` |
+| `org.yaml:snakeyaml` | 2.6 | Apache License 2.0 | `net.datafaker:datafaker` (locale data is stored as YAML) |
+| `com.github.curious-odd-man:rgxgen` | 3.1 | Apache License 2.0 | `net.datafaker:datafaker` (regex-based generators) |
+| `com.googlecode.libphonenumber:libphonenumber` | 9.0.33 | Apache License 2.0 | `net.datafaker:datafaker` (phone number generators) |
 
 Not exhaustively enumerated below that tier; everything observed in `mvn dependency:tree` for both
 the `cassandra` and `scylladb` profiles is Apache License 2.0 or MIT, with the one exception above
