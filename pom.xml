@@ -16,6 +16,7 @@
         <scylladb.driver.version>4.19.2.0</scylladb.driver.version>
         <picocli.version>4.7.7</picocli.version>
         <nifi.security.cert.builder.version>2.10.0</nifi.security.cert.builder.version>
+        <nifi.record.version>2.10.0</nifi.record.version>
         <main.class>org.apache.nifi.testharness.cql.Main</main.class>
     </properties>
 
@@ -49,6 +50,27 @@
             <groupId>org.apache.nifi</groupId>
             <artifactId>nifi-security-cert-builder</artifactId>
             <version>${nifi.security.cert.builder.version}</version>
+        </dependency>
+        <!--
+          Apache License 2.0. The Record/RecordSchema/RecordFieldType model that the ported record<->CQL
+          conversion logic (see org.apache.nifi.testharness.cql.convert) operates on - the same model
+          nifi-cql-bundle itself uses, so ported values are genuinely NiFi Records, not a look-alike.
+        -->
+        <dependency>
+            <groupId>org.apache.nifi</groupId>
+            <artifactId>nifi-record</artifactId>
+            <version>${nifi.record.version}</version>
+        </dependency>
+        <!--
+          Apache License 2.0. Provides AvroTypeUtil, used to convert the Avro Schema the ported
+          CqlUdtSchemaMapper produces from CQL column metadata into a RecordSchema - the same
+          CQL -> Avro -> RecordSchema pipeline CassandraCQLExecutionService#createSchema uses in
+          nifi-cql-bundle. Transitively brings in Avro itself.
+        -->
+        <dependency>
+            <groupId>org.apache.nifi</groupId>
+            <artifactId>nifi-avro-record-utils</artifactId>
+            <version>${nifi.record.version}</version>
         </dependency>
     </dependencies>
 
