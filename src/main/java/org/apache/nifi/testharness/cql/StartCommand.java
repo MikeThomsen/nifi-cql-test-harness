@@ -174,6 +174,16 @@ final class StartCommand implements Callable<Integer> {
             TestUserProvisioner.createRole(contactPoint, bootstrapUsername, bootstrapPassword, username, password, bootstrapSslContext);
         }
 
+        ContainerRegistry.upsert(ContainerRegistry.DEFAULT_PATH, containerName, new ContainerRegistry.ContainerInfo(
+                engine,
+                sslMode,
+                sslSetupResult == null ? null : sslSetupResult.serverCertPem().toAbsolutePath().toString(),
+                sslSetupResult == null || sslSetupResult.clientKeyPem() == null ? null : sslSetupResult.clientKeyPem().toAbsolutePath().toString(),
+                sslSetupResult == null || sslSetupResult.clientCertPem() == null ? null : sslSetupResult.clientCertPem().toAbsolutePath().toString(),
+                sslSetupResult == null || sslSetupResult.caCertPem() == null ? null : sslSetupResult.caCertPem().toAbsolutePath().toString(),
+                withTestUser ? username : null,
+                withTestUser ? password : null));
+
         printReport(containerName, containerId, image, contactPoint, sslSetupResult, outputDirectory);
         return 0;
     }
@@ -238,5 +248,8 @@ final class StartCommand implements Callable<Integer> {
         System.out.println("The container keeps running after this process exits (started with --rm, so it is");
         System.out.println("removed automatically once stopped). Stop it later with:");
         System.out.println("  docker stop " + containerName);
+        System.out.println();
+        System.out.println("Open an interactive cqlsh session (with matching TLS/auth already wired up) with:");
+        System.out.println("  client " + containerName);
     }
 }

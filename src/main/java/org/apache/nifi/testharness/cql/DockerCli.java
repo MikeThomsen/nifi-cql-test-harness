@@ -36,6 +36,35 @@ final class DockerCli {
         run("rm", "-f", containerId);
     }
 
+    static void copyToContainer(final Path hostPath, final String containerName, final String containerPath) throws IOException, InterruptedException {
+        run("cp", hostPath.toString(), containerName + ":" + containerPath);
+    }
+
+    /** {@code docker exec <containerName> <command...>}, waiting for and discarding output - for short-lived
+     * setup commands (e.g. {@code mkdir -p}) that don't need a terminal attached. */
+    static void exec(final String containerName, final String... command) throws IOException, InterruptedException {
+        exec(containerName, null, command);
+    }
+
+    /** As {@link #exec(String, String...)}, but as root - only the file's owner or root can {@code chmod} it,
+     * and {@code docker cp} writes files under the copying (host) user's numeric UID, which doesn't
+     * necessarily correspond to any user - let alone the file's owner - inside the container. */
+    static void execAsRoot(final String containerName, final String... command) throws IOException, InterruptedException {
+        exec(containerName, "root", command);
+    }
+
+    private static void exec(final String containerName, final String user, final String[] command) throws IOException, InterruptedException {
+        final List<String> args = new ArrayList<>();
+        args.add("exec");
+        if (user != null) {
+            args.add("-u");
+            args.add(user);
+        }
+        args.add(containerName);
+        args.addAll(List.of(command));
+        run(args.toArray(new String[0]));
+    }
+
     /**
      * {@code docker run --rm -d --name <name> -p [<hostPort>:]<containerPort> <mountArgs...> <image>}. Returns
      * the new container's id. {@code --rm} only cleans up once the container is later stopped (e.g. via
@@ -65,6 +94,29 @@ final class DockerCli {
             throw new IOException("Could not parse host port from 'docker port' output: " + output);
         }
         return Integer.parseInt(matcher.group(1));
+    }
+
+    /**
+     * Runs a docker command with the current process's stdio inherited, for {@code client}'s cqlsh session -
+     * unlike {@link #run}, which buffers output for parsing and isn't suitable for a long-lived interactive
+     * subprocess (an interactive cqlsh REPL needs a real terminal attached, and even a one-shot {@code -e}
+     * query should stream straight to our own stdout rather than being captured and re-printed). Returns the
+     * subprocess's exit code directly rather than throwing on non-zero, matching normal CLI passthrough
+     * semantics - docker's/cqlsh's own error output is already visible via the inherited stderr.
+     */
+    static int runInheritIO(final String... args) throws IOException, InterruptedException {
+        final List<String> command = new ArrayList<>();
+        command.add("docker");
+        command.addAll(List.of(args));
+        final Process process = new ProcessBuilder(command).inheritIO().start();
+        return process.waitFor();
+    }
+
+    /** The container's own bridge-network IP, reachable from inside the container's own network namespace
+     * (i.e. from `docker exec`) as an alternative to cqlsh's {@code 127.0.0.1} default - which doesn't work
+     * for every image: ScyllaDB's, unlike Cassandra's, listens only on this address, not loopback. */
+    static String inspectIpAddress(final String containerName) throws IOException, InterruptedException {
+        return run("inspect", "-f", "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}", containerName);
     }
 
     static boolean isAvailable() {

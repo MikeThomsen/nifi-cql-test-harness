@@ -5,6 +5,7 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -38,7 +39,8 @@ final class SslProvisioner {
     private static final String CLIENT_DN = "CN=nifi-cql-test-harness-client";
 
     record SslSetupResult(CertificateMaterial.Store trustStore, Path clientPkcs12, String blockKey, String blockBody,
-                           SSLContext bootstrapSslContext) {
+                           SSLContext bootstrapSslContext, Path serverCertPem, Path clientKeyPem, Path clientCertPem,
+                           Path caCertPem) {
         String applyTo(final String yaml) {
             return YamlPatcher.replaceBlock(yaml, blockKey, blockBody);
         }
@@ -52,32 +54,58 @@ final class SslProvisioner {
         final boolean twoWay = sslMode == SslMode.TWO_WAY;
         final String serverDn = String.format(SERVER_DN_FORMAT, engine.name().toLowerCase());
 
+        // All generated TLS material lives under its own subfolder of the container's output directory, kept
+        // separate from the extracted/patched engine config (cassandra.yaml/scylla.yaml) alongside it.
+        final Path sslDirectory = outputDirectory.resolve("ssl");
+        Files.createDirectories(sslDirectory);
+
         final CertificateMaterial.KeyAndCertificate ca = twoWay ? CertificateMaterial.selfSignedCertificateAuthority(CA_DN) : null;
         final CertificateMaterial.KeyAndCertificate server = twoWay
                 ? CertificateMaterial.caSigned(ca, serverDn)
                 : CertificateMaterial.selfSigned(serverDn);
 
         final CertificateMaterial.Store deliveredTrustStore = CertificateMaterial.writeJksTrustStore(
-                server.certificate(), "server", outputDirectory.resolve("nifi-truststore.jks"));
+                server.certificate(), "server", sslDirectory.resolve("nifi-truststore.jks"));
+
+        // PEM copy of the server certificate, kept regardless of engine: Cassandra's own client_encryption_options
+        // block below still uses the JKS keystore, but `client` (docker exec cqlsh) only understands PEM. For
+        // ScyllaDB this is the exact same certificate scyllaBlock mounts into the container as its live server
+        // cert - reused as-is below rather than writing a duplicate.
+        final Path serverCertPem = CertificateMaterial.writeCertificatePem(server.certificate(), sslDirectory.resolve("server-cert.pem"));
 
         Path clientPkcs12 = null;
+        Path clientKeyPem = null;
+        Path clientCertPem = null;
+        Path caCertPem = null;
         CertificateMaterial.KeyAndCertificate client = null;
         if (twoWay) {
             client = CertificateMaterial.caSigned(ca, CLIENT_DN);
             clientPkcs12 = CertificateMaterial.writePkcs12NoPassword(
-                    client.keyPair().getPrivate(), client.certificate(), "client", outputDirectory.resolve("nifi-client-identity.p12"));
+                    client.keyPair().getPrivate(), client.certificate(), "client", sslDirectory.resolve("nifi-client-identity.p12"));
+            // PEM copies of the same client identity, for `client`'s cqlsh (userkey/usercert) - cqlsh only
+            // understands PEM, never PKCS12.
+            clientKeyPem = CertificateMaterial.writePrivateKeyPem(client.keyPair().getPrivate(), sslDirectory.resolve("client-key.pem"));
+            clientCertPem = CertificateMaterial.writeCertificatePem(client.certificate(), sslDirectory.resolve("client-cert.pem"));
+            // `client`'s cqlsh trust anchor in two-way mode: the CA, not the (CA-signed, non-self-signed) server
+            // leaf. Pinning the leaf directly - which is what the JKS truststore above does, and what one-way
+            // mode has to do since there's no CA there - works fine for the Java driver/JSSE (NiFi's use, and
+            // Cassandra's own cqlsh) but not for ScyllaDB's separately-packaged cqlsh, which fails chain
+            // validation ("unable to get local issuer certificate") without the actual issuing CA in the trust
+            // store. Trusting the CA is the textbook-correct approach and works for both.
+            caCertPem = CertificateMaterial.writeCertificatePem(ca.certificate(), sslDirectory.resolve("ca-cert.pem"));
         }
 
         final String blockBody = engine == Engine.CASSANDRA
-                ? cassandraBlock(server, ca, twoWay, outputDirectory, mountArgs)
-                : scyllaBlock(server, ca, twoWay, outputDirectory, mountArgs);
+                ? cassandraBlock(server, ca, twoWay, sslDirectory, mountArgs)
+                : scyllaBlock(server, ca, twoWay, sslDirectory, mountArgs, serverCertPem);
 
         // The bootstrap CREATE ROLE connection (TestUserProvisioner) has to speak TLS to the same server, and
         // - in two-way mode - present a certificate the server's own truststore will accept, since
         // require_client_auth applies to every connection, not just the ones NiFi makes later.
         final SSLContext bootstrapSslContext = buildBootstrapSslContext(server.certificate(), client);
 
-        return new SslSetupResult(deliveredTrustStore, clientPkcs12, "client_encryption_options", blockBody, bootstrapSslContext);
+        return new SslSetupResult(deliveredTrustStore, clientPkcs12, "client_encryption_options", blockBody, bootstrapSslContext,
+                serverCertPem, clientKeyPem, clientCertPem, caCertPem);
     }
 
     private static SSLContext buildBootstrapSslContext(final X509Certificate serverCertificate, final CertificateMaterial.KeyAndCertificate client)
@@ -107,10 +135,10 @@ final class SslProvisioner {
     }
 
     private static String cassandraBlock(final CertificateMaterial.KeyAndCertificate server, final CertificateMaterial.KeyAndCertificate ca,
-                                          final boolean requireClientAuth, final Path outputDirectory, final List<String> mountArgs)
+                                          final boolean requireClientAuth, final Path sslDirectory, final List<String> mountArgs)
             throws GeneralSecurityException, IOException {
         final CertificateMaterial.Store serverKeyStore = CertificateMaterial.writeJksKeyStore(
-                server.keyPair().getPrivate(), server.certificate(), "server", outputDirectory.resolve("server-keystore.jks"));
+                server.keyPair().getPrivate(), server.certificate(), "server", sslDirectory.resolve("server-keystore.jks"));
         addMount(mountArgs, serverKeyStore.path(), CASSANDRA_KEYSTORE_CONTAINER_PATH);
 
         final StringBuilder block = new StringBuilder()
@@ -123,7 +151,7 @@ final class SslProvisioner {
 
         if (requireClientAuth) {
             final CertificateMaterial.Store serverTrustStore = CertificateMaterial.writeJksTrustStore(
-                    ca.certificate(), "ca", outputDirectory.resolve("server-truststore.jks"));
+                    ca.certificate(), "ca", sslDirectory.resolve("server-truststore.jks"));
             addMount(mountArgs, serverTrustStore.path(), CASSANDRA_SERVER_TRUSTSTORE_CONTAINER_PATH);
             block.append("  truststore: ").append(CASSANDRA_SERVER_TRUSTSTORE_CONTAINER_PATH).append('\n')
                     .append("  truststore_password: ").append(serverTrustStore.password()).append('\n');
@@ -132,10 +160,10 @@ final class SslProvisioner {
     }
 
     private static String scyllaBlock(final CertificateMaterial.KeyAndCertificate server, final CertificateMaterial.KeyAndCertificate ca,
-                                       final boolean requireClientAuth, final Path outputDirectory, final List<String> mountArgs)
+                                       final boolean requireClientAuth, final Path sslDirectory, final List<String> mountArgs,
+                                       final Path serverCertPem)
             throws GeneralSecurityException, IOException {
-        final Path serverCertPem = CertificateMaterial.writeCertificatePem(server.certificate(), outputDirectory.resolve("server-cert.pem"));
-        final Path serverKeyPem = CertificateMaterial.writePrivateKeyPem(server.keyPair().getPrivate(), outputDirectory.resolve("server-key.pem"));
+        final Path serverKeyPem = CertificateMaterial.writePrivateKeyPem(server.keyPair().getPrivate(), sslDirectory.resolve("server-key.pem"));
         addMount(mountArgs, serverCertPem, SCYLLA_CERT_CONTAINER_PATH);
         addMount(mountArgs, serverKeyPem, SCYLLA_KEY_CONTAINER_PATH);
 
@@ -147,7 +175,7 @@ final class SslProvisioner {
 
         if (requireClientAuth) {
             final X509Certificate caCertificate = ca.certificate();
-            final Path caCertPem = CertificateMaterial.writeCertificatePem(caCertificate, outputDirectory.resolve("client-truststore.pem"));
+            final Path caCertPem = CertificateMaterial.writeCertificatePem(caCertificate, sslDirectory.resolve("client-truststore.pem"));
             addMount(mountArgs, caCertPem, SCYLLA_TRUSTSTORE_CONTAINER_PATH);
             block.append("  truststore: ").append(SCYLLA_TRUSTSTORE_CONTAINER_PATH).append('\n');
         }

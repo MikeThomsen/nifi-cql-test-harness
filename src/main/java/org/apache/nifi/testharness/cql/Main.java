@@ -18,7 +18,7 @@ import picocli.CommandLine.Option;
                 "Run 'nifi-cql-test-harness help start' (or 'help <command>' generally) for the full set of",
                 "options for a given command."
         },
-        subcommands = {StartCommand.class, RegisterTypeCommand.class, GenerateTableCommand.class, GenerateTestDataCommand.class, HelpCommand.class}
+        subcommands = {StartCommand.class, RegisterTypeCommand.class, GenerateTableCommand.class, GenerateTestDataCommand.class, ClientCommand.class, HelpCommand.class}
 )
 public class Main implements Runnable {
 
