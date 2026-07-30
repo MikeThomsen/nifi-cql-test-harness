@@ -23,9 +23,14 @@ import java.util.concurrent.Callable;
  * this project's {@code register-type} command would produce for it, emitted ahead of the table.
  *
  * <p>Field and record names are converted to snake_case for the generated column/table names (see
- * {@link SnakeCaseConverter}); the {@code --primary-key} option itself is expressed in the
- * original Avro field names, not the converted ones, since that's what's actually being read from
- * the schema.
+ * {@link SnakeCaseConverter}); the primary key itself is expressed in the original Avro field
+ * names, not the converted ones, since that's what's actually being read from the schema.
+ *
+ * <p>The primary key can come from either the {@code --primary-key} option or a {@value
+ * #PRIMARY_KEY_SCHEMA_PROPERTY} custom property directly on the Avro record (not a standard Avro
+ * property - this tool's own convention). If {@code --primary-key} is given, it always wins,
+ * regardless of whether the schema also declares one. If neither is present, that's an error:
+ * exactly one of the two is required.
  */
 @Command(
         name = "generate-table",
@@ -36,8 +41,15 @@ import java.util.concurrent.Callable;
                 "(tenantId -> tenant_id, PersonRecord -> person_record). A nested record field becomes its",
                 "own CREATE TYPE, printed before the table - the same conversion register-type performs.",
                 "",
-                "--primary-key uses the ORIGINAL Avro field names (not the converted column names) and",
-                "mirrors CQL's own PRIMARY KEY syntax:",
+                "The primary key can be given either via --primary-key, or embedded directly in the Avro",
+                "schema as a \"primaryKey\" property on the record (not a standard Avro property - this",
+                "tool's own convention, read with the exact same syntax as --primary-key):",
+                "  { \"type\": \"record\", \"name\": \"Person\", \"primaryKey\": \"(tenantId,userId),createdAt\", ... }",
+                "--primary-key always wins if both are present. If neither is present, this is an error -",
+                "exactly one of the two is required.",
+                "",
+                "Either way, the primary key uses the ORIGINAL Avro field names (not the converted column",
+                "names) and mirrors CQL's own PRIMARY KEY syntax:",
                 "  field                  a single-column partition key, no clustering columns",
                 "  field1,field2          field1 is the partition key; field2 is a clustering column",
                 "  (field1,field2),field3 a composite partition key (field1, field2); field3 is clustering",
@@ -51,15 +63,20 @@ import java.util.concurrent.Callable;
                 "",
                 "Examples:",
                 "  generate-table --schema-file person.avsc --primary-key id",
-                "  generate-table --schema-file person.avsc --primary-key \"(tenantId,userId),createdAt\" --keyspace myks"
+                "  generate-table --schema-file person.avsc --primary-key \"(tenantId,userId),createdAt\" --keyspace myks",
+                "  generate-table --schema-file person-with-embedded-key.avsc"
         }
 )
 final class GenerateTableCommand implements Callable<Integer> {
 
+    /** Custom (non-standard) Avro schema property this command reads a schema-embedded primary key from. */
+    private static final String PRIMARY_KEY_SCHEMA_PROPERTY = "primaryKey";
+
     @Option(names = "--schema-file", required = true, description = "Path to an Avro schema (.avsc) file.")
     private Path schemaFile;
 
-    @Option(names = "--primary-key", required = true, description = "Primary key, in Avro field names, using CQL's own PRIMARY KEY syntax (see description).")
+    @Option(names = "--primary-key", description = "Primary key, in Avro field names, using CQL's own PRIMARY KEY syntax (see description). Overrides "
+            + "a \"primaryKey\" property in the schema itself if both are present; required if the schema doesn't declare one.")
     private String primaryKeySpec;
 
     @Option(names = "--keyspace", description = "If given, qualifies the table name (and any generated UDT names) with this keyspace. If omitted, names are left unqualified.")
@@ -89,11 +106,23 @@ final class GenerateTableCommand implements Callable<Integer> {
 
         final RecordSchema recordSchema = AvroTypeUtil.createSchema(avroSchema);
 
+        // --primary-key always wins over the schema's own declaration when both are present. The schema
+        // property is read from the raw Avro Schema, not recordSchema, since AvroTypeUtil.createSchema has no
+        // reason to carry an arbitrary custom property like this one through to the RecordSchema it builds.
+        final String schemaDeclaredPrimaryKey = avroSchema.getProp(PRIMARY_KEY_SCHEMA_PROPERTY);
+        final String effectivePrimaryKeySpec = primaryKeySpec != null ? primaryKeySpec : schemaDeclaredPrimaryKey;
+        if (effectivePrimaryKeySpec == null) {
+            System.err.println("No primary key specified: pass --primary-key, or add a \"" + PRIMARY_KEY_SCHEMA_PROPERTY
+                    + "\" property to the Avro schema itself");
+            return 2;
+        }
+
+        final String primaryKeySource = primaryKeySpec != null ? "--primary-key" : "schema's \"" + PRIMARY_KEY_SCHEMA_PROPERTY + "\" property";
         final ParsedPrimaryKey primaryKey;
         try {
-            primaryKey = parsePrimaryKey(primaryKeySpec);
+            primaryKey = parsePrimaryKey(effectivePrimaryKeySpec);
         } catch (final IllegalArgumentException e) {
-            System.err.println("--primary-key: " + e.getMessage());
+            System.err.println(primaryKeySource + ": " + e.getMessage());
             return 2;
         }
 
@@ -110,7 +139,7 @@ final class GenerateTableCommand implements Callable<Integer> {
         try {
             validatePrimaryKeyFields(allKeyFields, resolution.cqlTypesByFieldName());
         } catch (final IllegalArgumentException e) {
-            System.err.println("--primary-key: " + e.getMessage());
+            System.err.println(primaryKeySource + ": " + e.getMessage());
             return 2;
         }
 
