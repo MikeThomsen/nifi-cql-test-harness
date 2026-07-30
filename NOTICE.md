@@ -49,29 +49,97 @@ dependencies above (via `AvroTypeUtil.createSchema`, the same call `CqlRecordSch
 the opposite direction) and, for the `generate-test-data` files, of `net.datafaker:datafaker` above -
 not because they're derived code like the table above.
 
-## Notable transitive dependencies
+## Transitive dependencies by license
 
-| Dependency | Version | License | Pulled in by |
-|---|---|---|---|
-| `org.bouncycastle:bcpkix-jdk18on` | 1.84 | Bouncy Castle License (MIT-style) | `nifi-security-cert-builder` |
-| `org.bouncycastle:bcprov-jdk18on` | 1.84 | Bouncy Castle License (MIT-style) | `nifi-security-cert-builder` |
-| `org.bouncycastle:bcutil-jdk18on` | 1.84 | Bouncy Castle License (MIT-style) | `nifi-security-cert-builder` (via `bcpkix-jdk18on`) |
-| Netty (`io.netty:netty-*`) | 4.1.x | Apache License 2.0 | CQL driver (both `cassandra` and `scylladb` profiles) |
-| Jackson (`com.fasterxml.jackson.core:*`) | 2.x | Apache License 2.0 | CQL driver |
-| `com.typesafe:config` | 1.4.1 | Apache License 2.0 | CQL driver (driver configuration loading) |
-| `org.slf4j:slf4j-api` | 1.7.x | MIT License | CQL driver |
-| `io.dropwizard.metrics:metrics-core` | 4.1.x | Apache License 2.0 | CQL driver |
-| `org.apache.avro:avro` | 1.12.1 | Apache License 2.0 | `nifi-avro-record-utils` |
-| `commons-io:commons-io` | 2.22.0 | Apache License 2.0 | `nifi-avro-record-utils` |
-| `org.apache.commons:commons-compress` | 1.28.0 | Apache License 2.0 | `nifi-avro-record-utils` |
-| `com.github.ben-manes.caffeine:caffeine` | 3.2.4 | Apache License 2.0 | `nifi-avro-record-utils` |
-| `org.yaml:snakeyaml` | 2.6 | Apache License 2.0 | `net.datafaker:datafaker` (locale data is stored as YAML) |
-| `com.github.curious-odd-man:rgxgen` | 3.1 | Apache License 2.0 | `net.datafaker:datafaker` (regex-based generators) |
-| `com.googlecode.libphonenumber:libphonenumber` | 9.0.33 | Apache License 2.0 | `net.datafaker:datafaker` (phone number generators) |
+Every dependency below is transitive (pulled in by a direct dependency, never declared in `pom.xml`
+directly) and appears in `mvn dependency:tree` for the `cassandra` and/or `scylladb` profile. This
+list is exhaustive for both profiles, not a "notable" sample, and every license here has been checked
+against the Apache Software Foundation's Category X (prohibited) list at
+<https://www.apache.org/legal/resolved.html> - none of them appear on it. Where the same artifact
+resolves to a different version per profile, both are listed.
 
-Not exhaustively enumerated below that tier; everything observed in `mvn dependency:tree` for both
-the `cassandra` and `scylladb` profiles is Apache License 2.0 or MIT, with the one exception above
-(Bouncy Castle's own license, also permissive/MIT-style).
+### Apache License 2.0
+
+| Dependency | Version | Pulled in by |
+|---|---|---|
+| `org.apache.nifi:nifi-standard-record-utils` | 2.10.0 | `nifi-avro-record-utils` |
+| `org.apache.nifi:nifi-security-utils-api` | 2.10.0 | `nifi-standard-record-utils` |
+| `org.apache.nifi:nifi-schema-registry-service-api` | 2.10.0 | `nifi-avro-record-utils` |
+| `org.apache.nifi:nifi-record-serialization-service-api` | 2.10.0 | `nifi-avro-record-utils` |
+| `org.apache.commons:commons-csv` | 1.14.1 | `nifi-standard-record-utils` |
+| `org.apache.commons:commons-text` | 1.15.0 | `nifi-standard-record-utils` |
+| `org.apache.commons:commons-lang3` | 3.20.0 | `nifi-avro-record-utils` |
+| `org.apache.avro:avro` | 1.12.1 | `nifi-avro-record-utils` |
+| `commons-io:commons-io` | 2.22.0 | `nifi-avro-record-utils` |
+| `org.apache.commons:commons-compress` | 1.28.0 | `nifi-avro-record-utils` |
+| `commons-codec:commons-codec` | 1.19.0 | `commons-compress` |
+| `com.fasterxml.jackson.core:jackson-databind` | 2.22.0 | `nifi-avro-record-utils` |
+| `com.fasterxml.jackson.core:jackson-annotations` | 2.22 | `jackson-databind` |
+| `com.fasterxml.jackson.core:jackson-core` | 2.20.1 (cassandra) / 2.21.3 (scylladb) | CQL driver |
+| `com.github.ben-manes.caffeine:caffeine` | 3.2.4 | `nifi-avro-record-utils` |
+| `org.jspecify:jspecify` | 1.0.0 | `caffeine` |
+| `com.google.errorprone:error_prone_annotations` | 2.49.0 | `caffeine` |
+| `org.yaml:snakeyaml` | 2.6 | `net.datafaker:datafaker` (locale data is stored as YAML) |
+| `com.github.curious-odd-man:rgxgen` | 3.1 | `net.datafaker:datafaker` (regex-based generators) |
+| `com.googlecode.libphonenumber:libphonenumber` | 9.0.33 | `net.datafaker:datafaker` (phone number generators) |
+| `com.datastax.oss:native-protocol` (cassandra profile) | 1.5.2 | CQL driver |
+| `com.scylladb:native-protocol` (scylladb profile) | 1.5.2.2 | CQL driver |
+| `org.apache.cassandra:java-driver-guava-shaded` (cassandra profile) | 4.19.3 | CQL driver |
+| `com.scylladb:java-driver-guava-shaded` (scylladb profile) | 4.19.2.0 | CQL driver |
+| Netty (`io.netty:netty-common`, `-resolver`, `-buffer`, `-transport`, `-transport-native-unix-common`, `-handler`, `-codec`) | 4.1.130.Final (cassandra) / 4.1.135.Final (scylladb) | CQL driver |
+| `com.typesafe:config` | 1.4.1 (cassandra) / 1.4.8 (scylladb) | CQL driver (driver configuration loading) |
+| `io.dropwizard.metrics:metrics-core` | 4.1.18 (cassandra) / 4.2.38 (scylladb) | CQL driver |
+| `com.github.jnr:jnr-ffi` | 2.2.11 (cassandra) / 2.2.19 (scylladb) | `jnr-posix` |
+| `com.github.jnr:jnr-constants` | 0.10.3 (cassandra) / 0.10.4 (scylladb) | `jnr-posix` |
+| `com.github.jnr:jffi` | 1.3.9 (cassandra) / 1.3.15 (scylladb) | `jnr-ffi` |
+| `com.github.jnr:jnr-a64asm` | 1.0.0 | `jnr-ffi` |
+
+### MIT License
+
+| Dependency | Version | Pulled in by |
+|---|---|---|
+| `org.slf4j:slf4j-api` | 2.0.18 | `nifi-record` |
+| `com.github.jnr:jnr-x86asm` | 1.0.2 | `jnr-ffi` |
+
+### Bouncy Castle Licence (MIT-style)
+
+| Dependency | Version | Pulled in by |
+|---|---|---|
+| `org.bouncycastle:bcpkix-jdk18on` | 1.84 | `nifi-security-cert-builder` |
+| `org.bouncycastle:bcprov-jdk18on` | 1.84 | `nifi-security-cert-builder` |
+| `org.bouncycastle:bcutil-jdk18on` | 1.84 | `nifi-security-cert-builder` (via `bcpkix-jdk18on`) |
+
+### BSD-3-Clause
+
+| Dependency | Version | Pulled in by |
+|---|---|---|
+| `org.ow2.asm:asm`, `asm-commons`, `asm-analysis`, `asm-tree`, `asm-util` | 9.2 (cassandra) / 9.7.1 (scylladb) | `jnr-ffi` |
+
+### BSD-2-Clause / Public Domain (CC0 1.0) - dual-licensed
+
+| Dependency | Version | Pulled in by |
+|---|---|---|
+| `org.hdrhistogram:HdrHistogram` | 2.1.12 (cassandra) / 2.2.2 (scylladb) | CQL driver |
+
+### CC0 1.0 / MIT-0
+
+| Dependency | Version | Pulled in by |
+|---|---|---|
+| `org.reactivestreams:reactive-streams` | 1.0.3 (cassandra) / 1.0.4 (scylladb) | CQL driver |
+
+### Eclipse Public License 2.0
+
+| Dependency | Version | Pulled in by |
+|---|---|---|
+| `com.github.jnr:jnr-posix` | 3.1.15 (cassandra) / 3.1.22 (scylladb) | CQL driver (POSIX bindings used by the driver's native-transport layer) |
+
+EPL 2.0 is the one dependency in this project that isn't Category A (permissive) like everything else
+above - the ASF classifies it as **Category B** (weak copyleft): permitted for inclusion, but its own
+attribution/notice terms apply to `jnr-posix` specifically rather than it being interchangeable with
+the Apache-licensed code around it. It is not Category X (prohibited) - GPL/LGPL/AGPL, SSPL,
+BSD-4-Clause, and the other licenses actually banned by
+<https://www.apache.org/legal/resolved.html> do not appear anywhere in this project's dependency tree
+for either profile.
 
 ## Build-time only (not bundled in the produced jar/native image)
 
@@ -82,5 +150,6 @@ the `cassandra` and `scylladb` profiles is Apache License 2.0 or MIT, with the o
 ## Maintenance note
 
 Re-run `mvn dependency:tree` (per active profile) and `mvn dependency:tree -P scylladb` after any
-version bump, and update this file if a new direct or notable transitive dependency is introduced
-or a license changes.
+version bump, and update this file if a new direct or transitive dependency is introduced or a
+license changes - including re-checking the new/changed license against
+<https://www.apache.org/legal/resolved.html>'s Category X list.
