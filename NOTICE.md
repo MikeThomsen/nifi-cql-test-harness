@@ -33,7 +33,6 @@ concern - listed here for provenance/audit purposes.
 | `convert/CqlUdtSchemaMapper.java` | `mapping/CassandraUdtSchemaMapper.java` |
 | `convert/CqlRecordSchemaMapper.java` | `CassandraCQLExecutionService#createSchema` (plus its `AvroTypeUtil.createSchema` call in `#query`) |
 | `convert/CqlBindValueConverter.java` | `CassandraCQLExecutionService#convertForCqlType` / `#getBindValues` |
-| `convert/CqlRowConverter.java` | The row-to-`MapRecord` loop in `CassandraCQLExecutionService#query` |
 
 ## Code written for this project
 

@@ -267,8 +267,7 @@ final class GenerateTestDataCommand implements Callable<Integer> {
         return InetSocketAddress.createUnresolved(host, port);
     }
 
-    /** Same rationale and retry budget as the identical helper in VerifyCommand: a container's TCP port can
-     * accept connections before its CQL listener is actually ready. */
+    /** A container's TCP port can accept connections before its CQL listener is actually ready. */
     private static CqlSession connectWithRetry(final CqlSessionBuilder sessionBuilder) throws InterruptedException {
         final int connectAttempts = 40;
         final long retryDelayMillis = 3_000L;
