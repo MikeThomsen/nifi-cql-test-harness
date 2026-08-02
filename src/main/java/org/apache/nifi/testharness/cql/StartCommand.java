@@ -34,6 +34,11 @@ import java.util.concurrent.Callable;
                 "enable it on the container, and --with-test-user to provision username/password authentication",
                 "with the given credentials.",
                 "",
+                "Once the container accepts connections, a keyspace named by --keyspace (default: nifi_test) is",
+                "created with SimpleStrategy and no real replication (replication_factor 1). This happens before",
+                "--with-test-user role creation, using whatever bootstrap identity is on hand (unauthenticated if",
+                "--with-test-user was not requested).",
+                "",
                 "At least one option is required - bare `start` with nothing after it prints this help and exits",
                 "with an error, rather than silently launching a plain, unauthenticated, no-TLS Cassandra container."
         },
@@ -43,7 +48,8 @@ import java.util.concurrent.Callable;
                 "  start --engine cassandra",
                 "  start --engine scylladb --container-name my-scylla --host-port 9042",
                 "  start --with-ssl=two-way --with-test-user --username admin --password secret",
-                "  start --specific-image cassandra:5.0-beta1"
+                "  start --specific-image cassandra:5.0-beta1",
+                "  start --engine cassandra --keyspace my_keyspace"
         }
 )
 final class StartCommand implements Callable<Integer> {
@@ -63,6 +69,8 @@ final class StartCommand implements Callable<Integer> {
 
     private static final String CASSANDRA_BOOTSTRAP_USERNAME = "cassandra";
     private static final String CASSANDRA_BOOTSTRAP_PASSWORD = "cassandra";
+
+    private static final String DEFAULT_EXECUTABLE_NAME = "nifi-cql-test-harness";
 
     private static final int CQL_PORT = 9042;
 
@@ -93,6 +101,9 @@ final class StartCommand implements Callable<Integer> {
 
     @Option(names = "--container-name", description = "Name to give the new Docker container. Default: an auto-generated name.")
     private String containerNameOption;
+
+    @Option(names = "--keyspace", description = "Keyspace to create once the container is ready, with SimpleStrategy and replication_factor 1. Default: ${DEFAULT-VALUE}.", defaultValue = "nifi_test")
+    private String keyspace;
 
     @Override
     public Integer call() throws Exception {
@@ -168,9 +179,13 @@ final class StartCommand implements Callable<Integer> {
         System.out.println("Waiting for " + contactPoint + " to accept connections ...");
         waitForPort("127.0.0.1", mappedHostPort, READINESS_TIMEOUT);
 
+        final var bootstrapSslContext = sslSetupResult == null ? null : sslSetupResult.bootstrapSslContext();
+
+        System.out.println("Creating keyspace '" + keyspace + "' ...");
+        KeyspaceProvisioner.createKeyspace(engine, contactPoint, bootstrapUsername, bootstrapPassword, keyspace, bootstrapSslContext);
+
         if (withTestUser) {
             System.out.println("Creating role '" + username + "' ...");
-            final var bootstrapSslContext = sslSetupResult == null ? null : sslSetupResult.bootstrapSslContext();
             TestUserProvisioner.createRole(contactPoint, bootstrapUsername, bootstrapPassword, username, password, bootstrapSslContext);
         }
 
@@ -232,6 +247,7 @@ final class StartCommand implements Callable<Integer> {
         System.out.println("  Id:            " + containerId);
         System.out.println("  Image:         " + image);
         System.out.println("  Contact point: " + contactPoint);
+        System.out.println("  Keyspace:      " + keyspace);
         if (sslSetupResult != null) {
             System.out.println("  TLS:           " + (sslMode == SslMode.ONE_WAY ? "one-way" : "two-way"));
             System.out.println("    Truststore (JKS): " + sslSetupResult.trustStore().path().toAbsolutePath());
@@ -250,6 +266,22 @@ final class StartCommand implements Callable<Integer> {
         System.out.println("  docker stop " + containerName);
         System.out.println();
         System.out.println("Open an interactive cqlsh session (with matching TLS/auth already wired up) with:");
-        System.out.println("  client " + containerName);
+        System.out.println("  " + resolveExecutableCommand() + " client " + containerName);
+    }
+
+    /**
+     * Resolves whatever the caller actually ran, so the printed "client ..." line is ready to copy-paste
+     * rather than assuming a "nifi-cql-test-harness" alias is on the PATH. Only the native-image build (the
+     * project's one real standalone-executable distribution) can be resolved precisely: the whole OS
+     * process IS that one binary, so ProcessHandle reports its real path directly. The plain jar this
+     * project also builds has no Class-Path manifest entry, so "java -jar" can't actually run it standalone
+     * either way - falls back to the static command name for that and any other launch shape (e.g. a dev
+     * classpath run).
+     */
+    private static String resolveExecutableCommand() {
+        if ("runtime".equals(System.getProperty("org.graalvm.nativeimage.imagecode"))) {
+            return ProcessHandle.current().info().command().orElse(DEFAULT_EXECUTABLE_NAME);
+        }
+        return DEFAULT_EXECUTABLE_NAME;
     }
 }

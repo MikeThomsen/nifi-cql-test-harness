@@ -103,6 +103,9 @@ nifi-cql-test-harness start --with-ssl=two-way --with-test-user --username admin
 
 # A specific image/tag instead of the engine default
 nifi-cql-test-harness start --specific-image cassandra:5.0-beta1
+
+# Custom keyspace name
+nifi-cql-test-harness start --engine cassandra --keyspace my_keyspace
 ```
 
 Key options:
@@ -115,9 +118,15 @@ Key options:
 | `--with-test-user` | Provisions username/password authentication. Requires `--username` and `--password`. |
 | `--host-port` | Host port to map to the container's CQL port (9042). Omit to let Docker pick a random free port. |
 | `--container-name` | Name for the new container. Omit for an auto-generated name. |
+| `--keyspace` | Keyspace to create once the container is ready, with SimpleStrategy and replication_factor 1. Default: `nifi_test`. |
 
 At least one option is required - a bare `start` prints help and exits with an error rather than
 silently launching an unauthenticated, no-TLS container.
+
+The keyspace is always created (even if `--keyspace` isn't explicitly passed, since it has a
+default), right after the container accepts connections and before any `--with-test-user` role is
+created - using whatever bootstrap identity is on hand (unauthenticated if `--with-test-user` was
+not requested).
 
 `start` prints a report at the end with the contact point, any generated TLS material or test-user
 credentials, the container's output directory (under `nifi-cql-test-harness-output/`), and the
