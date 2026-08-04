@@ -15,8 +15,8 @@
         <cassandra.driver.version>4.19.3</cassandra.driver.version>
         <scylladb.driver.version>4.19.2.0</scylladb.driver.version>
         <picocli.version>4.7.7</picocli.version>
-        <nifi.security.cert.builder.version>2.10.0</nifi.security.cert.builder.version>
-        <nifi.record.version>2.10.0</nifi.record.version>
+        <nifi.security.cert.builder.version>2.11.0</nifi.security.cert.builder.version>
+        <nifi.record.version>2.11.0</nifi.record.version>
         <datafaker.version>2.7.0</datafaker.version>
         <main.class>org.apache.nifi.testharness.cql.Main</main.class>
     </properties>
