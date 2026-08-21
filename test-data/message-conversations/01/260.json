@@ -1,0 +1,28 @@
+{
+  "chat_id": "a1b68ccc-0996-4160-9e10-a9ca8cd6c571",
+  "created_at": 1786347000000,
+  "chat_name": "Atlas Cutover Squad",
+  "participants": [
+    {
+      "user_id": "223a47ed-0f2c-44c5-b2ac-2a37133bf101",
+      "authenticator": "google-oauth2",
+      "principal": "priya.patel",
+      "joined_at": 1786347000000
+    },
+    {
+      "user_id": "b7e92e2b-de17-4e1e-9415-8bc8057d8cbc",
+      "authenticator": "saml",
+      "principal": "dramirez@example.com",
+      "joined_at": 1786347135000
+    },
+    {
+      "user_id": "b9debc33-fbb6-4fca-9a90-f361b7572fea",
+      "authenticator": "okta-saml",
+      "principal": "jordan.kim",
+      "joined_at": 1786347340000
+    }
+  ],
+  "sent_at": 1786527219000,
+  "sender_id": "223a47ed-0f2c-44c5-b2ac-2a37133bf101",
+  "body": "looking now"
+}
