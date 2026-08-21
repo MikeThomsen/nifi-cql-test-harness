@@ -1,0 +1,28 @@
+{
+  "type": "record",
+  "name": "MessageByChat",
+  "namespace": "com.example.chat",
+  "doc": "A single chat message; mirrors the CQL messages_by_chat table. Date and hour are carried as a single timestamp-millis field (sent_at); the writer derives msg_date and msg_hour from it when binding to Cassandra.",
+  "fields": [
+    {
+      "name": "chat_id",
+      "type": { "type": "string", "logicalType": "uuid" },
+      "doc": "Chat the message belongs to (part of the CQL partition key)"
+    },
+    {
+      "name": "sent_at",
+      "type": { "type": "long", "logicalType": "timestamp-millis" },
+      "doc": "When the message was sent (UTC epoch millis). Source of truth for msg_date (UTC day) and msg_hour (UTC hour 0-23) in the CQL table, and the final clustering column that identifies the row"
+    },
+    {
+      "name": "sender_id",
+      "type": { "type": "string", "logicalType": "uuid" },
+      "doc": "User id of the sender"
+    },
+    {
+      "name": "body",
+      "type": "string",
+      "doc": "Message text (required)"
+    }
+  ]
+}

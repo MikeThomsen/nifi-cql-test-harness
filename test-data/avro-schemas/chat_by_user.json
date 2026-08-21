@@ -1,0 +1,33 @@
+{
+  "type": "record",
+  "name": "ChatByUser",
+  "namespace": "com.example.chat",
+  "doc": "Reverse lookup of chat membership; mirrors the CQL chats_by_user table",
+  "fields": [
+    {
+      "name": "user_id",
+      "type": { "type": "string", "logicalType": "uuid" },
+      "doc": "The member's user id (partition key in CQL)"
+    },
+    {
+      "name": "chat_id",
+      "type": { "type": "string", "logicalType": "uuid" },
+      "doc": "The chat this user belongs to (clustering key in CQL)"
+    },
+    {
+      "name": "joined_at",
+      "type": { "type": "long", "logicalType": "timestamp-millis" },
+      "doc": "When the user joined the chat (UTC epoch millis)"
+    },
+    {
+      "name": "authenticator",
+      "type": "string",
+      "doc": "SSO mechanism that authenticated this member, e.g. 'openid', 'oidc', 'saml', 'google-oauth2'. Names a third-party single sign-on scheme, not a local password"
+    },
+    {
+      "name": "principal",
+      "type": "string",
+      "doc": "External login identifier asserted by the authenticator, e.g. 'alice.nguyen' or 'bmartinez@example.com'. Human-meaningful, NOT a UUID; user_id remains the key for joins"
+    }
+  ]
+}

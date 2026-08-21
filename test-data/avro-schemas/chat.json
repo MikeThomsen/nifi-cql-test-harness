@@ -1,0 +1,33 @@
+{
+  "type": "record",
+  "name": "Chat",
+  "namespace": "com.example.chat",
+  "doc": "Chat metadata; mirrors the CQL chats table",
+  "fields": [
+    {
+      "name": "chat_id",
+      "type": { "type": "string", "logicalType": "uuid" },
+      "doc": "Primary key of the chat"
+    },
+    {
+      "name": "created_at",
+      "type": { "type": "long", "logicalType": "timestamp-millis" },
+      "doc": "When the chat was created (UTC epoch millis)"
+    },
+    {
+      "name": "chat_name",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Optional display name for the chat"
+    },
+    {
+      "name": "participants",
+      "type": {
+        "type": "array",
+        "items": { "type": "string", "logicalType": "uuid" }
+      },
+      "default": [],
+      "doc": "Member user_ids (3 or more); mirrors CQL set<uuid>, uniqueness enforced by the application. Each member's SSO identity (authenticator, principal, joined_at) lives on the ChatByUser record, not here."
+    }
+  ]
+}

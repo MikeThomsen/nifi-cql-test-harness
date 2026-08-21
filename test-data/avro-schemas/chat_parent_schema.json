@@ -1,0 +1,73 @@
+{
+  "type": "record",
+  "name": "IngestedChatMessage",
+  "namespace": "com.example.chat",
+  "doc": "Parent envelope for a single ingested chat message. Carries the superset of fields needed to project three downstream records: Chat (chat metadata), ChatByUser (one membership row per participant), and MessageByChat (the message itself). A NiFi/stream processor reads one of these and writes to all three Cassandra tables.",
+  "fields": [
+    {
+      "name": "chat_id",
+      "type": { "type": "string", "logicalType": "uuid" },
+      "doc": "Shared key. -> Chat.chat_id, ChatByUser.chat_id, MessageByChat.chat_id"
+    },
+    {
+      "name": "created_at",
+      "type": { "type": "long", "logicalType": "timestamp-millis" },
+      "doc": "-> Chat.created_at (UTC epoch millis)"
+    },
+    {
+      "name": "chat_name",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "-> Chat.chat_name (optional display name)"
+    },
+    {
+      "name": "participants",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Participant",
+          "doc": "One chat member and when they joined.",
+          "fields": [
+            {
+              "name": "user_id",
+              "type": { "type": "string", "logicalType": "uuid" },
+              "doc": "Stable internal identifier for the member. -> ChatByUser.user_id; projected into Chat.participants. This is the system's own UUID, distinct from the externally supplied principal below."
+            },
+            {
+              "name": "authenticator",
+              "type": "string",
+              "doc": "Identity provider / SSO mechanism that authenticated this member, e.g. 'openid', 'oidc', 'saml', 'google-oauth2', 'okta-saml'. Names a third-party single sign-on scheme rather than a local password; qualifies how 'principal' should be interpreted and which IdP to trust it against."
+            },
+            {
+              "name": "principal",
+              "type": "string",
+              "doc": "The subject/username as asserted by the authenticator, e.g. 'alice.nguyen', 'bmartinez@example.com', or an IdP subject claim. A human-meaningful login identifier, NOT a UUID; do not use in place of user_id for keys or joins."
+            },
+            {
+              "name": "joined_at",
+              "type": { "type": "long", "logicalType": "timestamp-millis" },
+              "doc": "When this member joined the chat (UTC epoch millis). -> ChatByUser.joined_at"
+            }
+          ]
+        }
+      },
+      "doc": "3 or more members. Project user_id values into Chat.participants (set<uuid>); expand into one ChatByUser row per element (user_id, chat_id, joined_at)"
+    },
+    {
+      "name": "sent_at",
+      "type": { "type": "long", "logicalType": "timestamp-millis" },
+      "doc": "-> MessageByChat.sent_at (UTC epoch millis). Source of truth for the msg_date/msg_hour partition and clustering keys, and the final clustering column that identifies the row"
+    },
+    {
+      "name": "sender_id",
+      "type": { "type": "string", "logicalType": "uuid" },
+      "doc": "-> MessageByChat.sender_id. Must be one of participants[].user_id"
+    },
+    {
+      "name": "body",
+      "type": "string",
+      "doc": "-> MessageByChat.body (required message text)"
+    }
+  ]
+}
