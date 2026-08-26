@@ -49,7 +49,13 @@ CREATE TABLE IF NOT EXISTS chat_users_by_principal (
     user_id uuid,
     joined_at timestamp,
     primary key ((principal), authenticator)
-)
+);
+
+CREATE TABLE IF NOT EXISTS banned_users (
+    identity blob,
+    reason blob,
+    primary key((identity))
+);
 
 -- Example queries this schema serves:
 --
