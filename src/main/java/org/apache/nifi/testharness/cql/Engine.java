@@ -5,7 +5,7 @@ import java.util.Locale;
 public enum Engine {
 
     CASSANDRA("cassandra:5.0", "cassandra", "/etc/cassandra/cassandra.yaml"),
-    SCYLLADB("scylladb/scylla:2026.2", "scylla", "/etc/scylla/scylla.yaml");
+    SCYLLADB("scylladb/scylla:2026.2.1", "scylla", "/etc/scylla/scylla.yaml");
 
     private final String defaultImage;
     private final String imageNameToken;
