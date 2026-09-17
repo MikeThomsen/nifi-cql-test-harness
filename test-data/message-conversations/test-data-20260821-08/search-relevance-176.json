@@ -1,0 +1,58 @@
+{
+  "chat_id": "e2c39bd5-e2d9-4558-97be-6737cca342c0",
+  "created_at": 1767598200000,
+  "chat_name": "Search Relevance Squad",
+  "participants": [
+    {
+      "user_id": "f5f68c0c-0830-4777-9a12-add7111ea68c",
+      "authenticator": "google-oauth2",
+      "principal": "danielle.ruiz@example.com",
+      "joined_at": 1767598200000
+    },
+    {
+      "user_id": "ba42d4f3-62cb-418f-99c8-92e1c1c00ae5",
+      "authenticator": "okta-saml",
+      "principal": "marcus.webb",
+      "joined_at": 1767598350000
+    },
+    {
+      "user_id": "143930c4-635a-4135-a232-def5cd87c330",
+      "authenticator": "saml",
+      "principal": "yibrahim@example.com",
+      "joined_at": 1767598500000
+    },
+    {
+      "user_id": "8f47f862-c979-42bd-b17e-3fe26d65a912",
+      "authenticator": "azure-ad",
+      "principal": "chloe.marsh",
+      "joined_at": 1767598650000
+    },
+    {
+      "user_id": "70608876-6262-4ffa-a732-75e669f79a33",
+      "authenticator": "azure-ad",
+      "principal": "devon.park",
+      "joined_at": 1767598800000
+    },
+    {
+      "user_id": "a98bfc23-883a-4865-830f-fa71e28b603f",
+      "authenticator": "saml",
+      "principal": "dramirez@example.com",
+      "joined_at": 1767598950000
+    },
+    {
+      "user_id": "06c14a25-7702-4f85-9114-dcb1b9e25046",
+      "authenticator": "saml",
+      "principal": "tomas.ferreira@example.com",
+      "joined_at": 1767599100000
+    },
+    {
+      "user_id": "de6e7797-a596-44d0-84d1-fe8f78238768",
+      "authenticator": "okta-saml",
+      "principal": "jordan.kim",
+      "joined_at": 1767599250000
+    }
+  ],
+  "sent_at": 1769419349000,
+  "sender_id": "f5f68c0c-0830-4777-9a12-add7111ea68c",
+  "body": "love this team so much, ok, go build"
+}

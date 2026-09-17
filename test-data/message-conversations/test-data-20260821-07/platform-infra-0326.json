@@ -1,0 +1,64 @@
+{
+  "chat_id": "e193ed8c-3688-452b-b6ca-10ebbe1c9f12",
+  "created_at": 1756711800000,
+  "chat_name": "Wayfarer Migration Squad",
+  "participants": [
+    {
+      "user_id": "26b82510-7b74-400b-94ae-18df5fd7707f",
+      "authenticator": "okta-saml",
+      "principal": "marcus.webb",
+      "joined_at": 1756711800000
+    },
+    {
+      "user_id": "92022262-d816-4237-81f8-321c48d798c1",
+      "authenticator": "google-oauth2",
+      "principal": "talia.nguyen@example.com",
+      "joined_at": 1756711950000
+    },
+    {
+      "user_id": "68b8fc8c-256e-446f-8352-60067fa12a32",
+      "authenticator": "saml",
+      "principal": "bostrowski",
+      "joined_at": 1756712100000
+    },
+    {
+      "user_id": "9b76afd8-31e6-4480-b6a6-c20c67734bcb",
+      "authenticator": "saml",
+      "principal": "yibrahim@example.com",
+      "joined_at": 1756712250000
+    },
+    {
+      "user_id": "32af3c71-10ba-48bb-b0fd-00b7aa2aba61",
+      "authenticator": "okta-saml",
+      "principal": "kwame.asante",
+      "joined_at": 1756712400000
+    },
+    {
+      "user_id": "5f73f6b7-dfc7-409c-a3a2-778b7ec6d3da",
+      "authenticator": "saml",
+      "principal": "tomas.ferreira@example.com",
+      "joined_at": 1756712550000
+    },
+    {
+      "user_id": "34df3a3c-e1c0-4530-8573-3be0e230c23a",
+      "authenticator": "saml",
+      "principal": "itorres@example.com",
+      "joined_at": 1756712700000
+    },
+    {
+      "user_id": "99a07bee-087b-46e9-b48c-916e40aeee80",
+      "authenticator": "google-oauth2",
+      "principal": "danielle.ruiz@example.com",
+      "joined_at": 1756712850000
+    },
+    {
+      "user_id": "7591ebb2-11a4-4a05-9d10-162a4d616012",
+      "authenticator": "okta-saml",
+      "principal": "victor.simmons",
+      "joined_at": 1756713000000
+    }
+  ],
+  "sent_at": 1759939503000,
+  "sender_id": "9b76afd8-31e6-4480-b6a6-c20c67734bcb",
+  "body": "running it through the rollout criteria checklist now"
+}

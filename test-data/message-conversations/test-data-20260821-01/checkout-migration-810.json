@@ -1,0 +1,58 @@
+{
+  "chat_id": "d5fa6842-acc7-4c48-bbc6-eabee46a4a8d",
+  "created_at": 1770017400000,
+  "chat_name": "Payments Cutover Crew",
+  "participants": [
+    {
+      "user_id": "4e57af20-eb1d-4ba3-9cbb-ae88ff6a9a1f",
+      "authenticator": "google-oauth2",
+      "principal": "priya.deshmukh",
+      "joined_at": 1770017400000
+    },
+    {
+      "user_id": "5cfdd320-a104-4fd0-b4f4-7379e745d781",
+      "authenticator": "okta-saml",
+      "principal": "marcus.webb",
+      "joined_at": 1770017550000
+    },
+    {
+      "user_id": "25c5d5ae-f278-430b-a233-f2b8befd1063",
+      "authenticator": "saml",
+      "principal": "itorres@example.com",
+      "joined_at": 1770017700000
+    },
+    {
+      "user_id": "9e2c28cf-0a37-4374-836e-5e0dab3ed476",
+      "authenticator": "google-oauth2",
+      "principal": "dev.patel",
+      "joined_at": 1770017850000
+    },
+    {
+      "user_id": "d08f8123-59c0-41d1-9e2b-7866271a22ad",
+      "authenticator": "azure-ad",
+      "principal": "chloe.marsh",
+      "joined_at": 1770018000000
+    },
+    {
+      "user_id": "54b208f2-abfc-4b19-8092-3406f54b5bd4",
+      "authenticator": "okta-saml",
+      "principal": "faisal.rahman",
+      "joined_at": 1770018150000
+    },
+    {
+      "user_id": "e14a6df2-eecb-4336-8094-daddccb20ce8",
+      "authenticator": "google-oauth2",
+      "principal": "talia.nguyen@example.com",
+      "joined_at": 1770018300000
+    },
+    {
+      "user_id": "8ba8fb92-d99b-4ea1-86be-78bc9b006847",
+      "authenticator": "azure-ad",
+      "principal": "omar.siddiqui",
+      "joined_at": 1770018450000
+    }
+  ],
+  "sent_at": 1783933801000,
+  "sender_id": "5cfdd320-a104-4fd0-b4f4-7379e745d781",
+  "body": "read through it this morning, really thorough, proud of how this came together"
+}

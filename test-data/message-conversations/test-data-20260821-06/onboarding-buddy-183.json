@@ -1,0 +1,22 @@
+{
+  "chat_id": "858c0a87-6769-433e-8e2f-e6f92483ee27",
+  "created_at": 1772436600000,
+  "chat_name": "Elena + Alex (buddy channel)",
+  "participants": [
+    {
+      "user_id": "68d06af0-5e0d-44b5-81d7-cfebb621bca8",
+      "authenticator": "google-oauth2",
+      "principal": "elena.cruz",
+      "joined_at": 1772436600000
+    },
+    {
+      "user_id": "f408a2a1-7b6e-4827-ae1d-d2cea6a837c5",
+      "authenticator": "azure-ad",
+      "principal": "alex.osei",
+      "joined_at": 1772436750000
+    }
+  ],
+  "sent_at": 1773244797000,
+  "sender_id": "f408a2a1-7b6e-4827-ae1d-d2cea6a837c5",
+  "body": "how's week 2 shaping up"
+}

@@ -1,0 +1,58 @@
+{
+  "chat_id": "6d0a8145-14cc-4088-888a-26cbc76af32d",
+  "created_at": 1775460600000,
+  "chat_name": "Weave Migration Squad",
+  "participants": [
+    {
+      "user_id": "9315410f-9427-44ba-bf58-56ce2e9f6f88",
+      "authenticator": "google-oauth2",
+      "principal": "elena.cruz",
+      "joined_at": 1775460600000
+    },
+    {
+      "user_id": "83d8cac9-75ff-4695-b5e3-bb1883c07702",
+      "authenticator": "okta-saml",
+      "principal": "marcus.webb",
+      "joined_at": 1775460750000
+    },
+    {
+      "user_id": "8cbfd383-4353-45fa-ad8d-00ef8686979b",
+      "authenticator": "saml",
+      "principal": "sana.iqbal@example.com",
+      "joined_at": 1775460900000
+    },
+    {
+      "user_id": "1ec62f8d-04a7-49e0-ae27-2a6c290d822f",
+      "authenticator": "azure-ad",
+      "principal": "devon.park",
+      "joined_at": 1775461050000
+    },
+    {
+      "user_id": "cf4432ec-fff5-4b68-981f-21ac422e0f79",
+      "authenticator": "google-oauth2",
+      "principal": "lior.bendavid",
+      "joined_at": 1775461200000
+    },
+    {
+      "user_id": "22551589-f8bf-429d-92f1-2552f0c36214",
+      "authenticator": "google-oauth2",
+      "principal": "danielle.ruiz@example.com",
+      "joined_at": 1775461350000
+    },
+    {
+      "user_id": "350b3d31-913d-47e5-a1ff-b8f2b380be12",
+      "authenticator": "azure-ad",
+      "principal": "felix.ndiaye",
+      "joined_at": 1775461500000
+    },
+    {
+      "user_id": "36722da4-c71b-4c56-9f47-e5c3af685051",
+      "authenticator": "saml",
+      "principal": "bostrowski",
+      "joined_at": 1775461650000
+    }
+  ],
+  "sent_at": 1786719858000,
+  "sender_id": "350b3d31-913d-47e5-a1ff-b8f2b380be12",
+  "body": "leadership's thrilled, said this is one of the smoothest migrations they've seen"
+}

@@ -1,0 +1,22 @@
+{
+  "chat_id": "1f380eb9-e11a-4655-96d1-7b12855897c3",
+  "created_at": 1764574200000,
+  "chat_name": "Warehouse Migration",
+  "participants": [
+    {
+      "user_id": "8d7c78a2-6458-42d9-8673-893d5db2a3f3",
+      "authenticator": "saml",
+      "principal": "taylor.nakamura",
+      "joined_at": 1764574200000
+    },
+    {
+      "user_id": "bc878ba2-b987-447d-8d24-91a6968416dd",
+      "authenticator": "okta-saml",
+      "principal": "jamie.oconnell",
+      "joined_at": 1764574350000
+    }
+  ],
+  "sent_at": 1767794698000,
+  "sender_id": "bc878ba2-b987-447d-8d24-91a6968416dd",
+  "body": "go for it"
+}
