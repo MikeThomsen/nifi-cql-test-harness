@@ -40,7 +40,6 @@ nars:
   - org.apache.nifi:nifi-record-serialization-services-nar
   - org.apache.nifi:nifi-registry-nar
   - org.apache.nifi:nifi-cql-nar
-  - org.apache.nifi:nifi-cql-distributedmapcache-service-nar
   - org.apache.nifi:nifi-scylladb-session-provider-service-nar
 
 parameters:
