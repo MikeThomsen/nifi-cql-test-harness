@@ -1,0 +1,135 @@
+# ExecuteCQL INSERT: rows land in the scratch table and read back.
+#
+# Drives the ExecuteCQL processor through nifi-cicd-test-runner against the local nifi-scylla
+# container. All of these specs share one flow, CQL_Tests.ExecuteCQL_Test.json, which has an input
+# port per statement (In_Insert, In_Lookup, In_Update, In_Delete, ...) and an output port per
+# statement. Row data travels in FlowFile attributes (item_id, item_name, item_quantity), which the
+# flow's cql.arg.N properties bind to the statement.
+#
+# Writes go only to nifi_test.cicd_scratch (cql-schemas/cicd_scratch.cql, create it once). Each case
+# uses its own item_id and the spec deletes what it created, so the specs can run in any order and be
+# repeated.
+#
+# A statement that fails or needs a retry ends at the flow's Failure port. That port is listed under
+# failurePorts, so an unexpected failure fails the case; the cases that expect one say so with
+# failurePort: Failure.
+#
+#   insert_applied_true   FlowFiles whose INSERT reported cql.applied=true (ExecuteCQL sets the
+#                         attribute; the flow puts its value in the counter name).
+#   lookup_rows           Records returned by the verifying SELECT.
+#
+# CQL_PASSWORD is the only parameter the export omits. The value below matches the local nifi-scylla
+# container; in CI, replace the parameters block with a parameterProviders entry (see
+# CQL_Tests.throughput-put.yaml).
+#
+# Run (from the test-data directory):
+#
+#   java -jar nifi-cicd-test-runner.jar run \
+#       --spec cicd-specs/CQL_Tests.execute-insert.yaml --nar-dir <nar-dir>
+
+flow: ../nifi-flows/CQL_Tests.ExecuteCQL_Test.json
+
+failurePorts: [Failure]
+
+nars:
+  - org.apache.nifi:nifi-standard-nar:2.12.0
+  - org.apache.nifi:nifi-cql-nar:2.12.0
+  - org.apache.nifi:nifi-scylladb-session-provider-service-nar:2.12.0
+
+parameters:
+  Cassandra Context:
+    CQL_PASSWORD: cassandra
+
+cases:
+  - name: insert first item
+    input:
+      port: In_Insert
+      text: "{}"
+      attributes: { item_id: cicd-insert-a, item_name: widget, item_quantity: "7" }
+    expect:
+      output:
+        port: Out_Insert
+        count: 1
+      counters:
+        insert_applied_true: 1
+        insert_applied_false: 0
+  - name: insert second item
+    input:
+      port: In_Insert
+      text: "{}"
+      attributes: { item_id: cicd-insert-b, item_name: gadget, item_quantity: "11" }
+    expect:
+      output:
+        port: Out_Insert
+        count: 1
+      counters:
+        insert_applied_true: 1
+  - name: first item reads back
+    input:
+      port: In_Lookup
+      text: "{}"
+      attributes: { item_id: cicd-insert-a }
+    expect:
+      output:
+        port: Out_Lookup
+        count: 1
+        contains: '"name":"widget"'
+      counters:
+        lookup_rows: 1
+  - name: second item reads back
+    input:
+      port: In_Lookup
+      text: "{}"
+      attributes: { item_id: cicd-insert-b }
+    expect:
+      output:
+        port: Out_Lookup
+        count: 1
+        contains: '"quantity":11'
+      counters:
+        lookup_rows: 1
+  - name: inserting an existing key overwrites it
+    input:
+      port: In_Insert
+      text: "{}"
+      attributes: { item_id: cicd-insert-a, item_name: widget-2, item_quantity: "8" }
+    expect:
+      output:
+        port: Out_Insert
+        count: 1
+      counters:
+        insert_applied_true: 1
+  - name: overwritten item reads back
+    input:
+      port: In_Lookup
+      text: "{}"
+      attributes: { item_id: cicd-insert-a }
+    expect:
+      output:
+        port: Out_Lookup
+        count: 1
+        contains: '"name":"widget-2"'
+      counters:
+        lookup_rows: 1
+  - name: clean up cicd-insert-a
+    input:
+      port: In_Delete
+      text: "{}"
+      attributes: { item_id: cicd-insert-a }
+    expect:
+      output:
+        port: Out_Delete
+        count: 1
+      counters:
+        delete_applied_true: 1
+  - name: clean up cicd-insert-b
+    input:
+      port: In_Delete
+      text: "{}"
+      attributes: { item_id: cicd-insert-b }
+    expect:
+      output:
+        port: Out_Delete
+        count: 1
+      counters:
+        delete_applied_true: 1
