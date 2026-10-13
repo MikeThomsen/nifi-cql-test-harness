@@ -33,8 +33,8 @@ failurePorts: [Failure]
 
 nars:
   - org.apache.nifi:nifi-standard-nar:2.12.0
-  - org.apache.nifi:nifi-cql-nar:2.12.0
-  - org.apache.nifi:nifi-scylladb-session-provider-service-nar:2.12.0
+  - io.github.mikethomsen:nifi-cql-nar:1.0.0
+  - io.github.mikethomsen:nifi-scylladb-session-provider-service-nar:1.0.0
 
 parameters:
   Cassandra Context:

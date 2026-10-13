@@ -1,7 +1,7 @@
 # Write-path throughput check for the "PutCQLRecord Test" process group, exported on its own
 # as CQL_Tests.PutCQLRecord_Test.json.
 #
-# Split from the original CQL_Tests.throughput.yaml, which exercised two groups of CQL_Tests at
+# Split from an earlier combined throughput spec, which exercised two groups of CQL_Tests at
 # once: nifi-cicd-test-runner runs one process group per flow, so the write and read checks are
 # separate specs with separate flows. Run this one first; the read check in
 # CQL_Tests.throughput-query.yaml queries the rows it writes.
@@ -39,8 +39,8 @@ nars:
   - org.apache.nifi:nifi-update-attribute-nar
   - org.apache.nifi:nifi-record-serialization-services-nar
   - org.apache.nifi:nifi-registry-nar
-  - org.apache.nifi:nifi-cql-nar
-  - org.apache.nifi:nifi-scylladb-session-provider-service-nar
+  - io.github.mikethomsen:nifi-cql-nar:1.0.0
+  - io.github.mikethomsen:nifi-scylladb-session-provider-service-nar:1.0.0
 
 parameters:
   Cassandra Context:

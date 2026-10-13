@@ -81,11 +81,11 @@
           "x": 400.0,
           "y": 0.0
         },
-        "type": "org.apache.nifi.processors.cql.ExecuteCQL",
+        "type": "io.github.mikethomsen.nifi.cql.processors.ExecuteCQL",
         "bundle": {
-          "group": "org.apache.nifi",
+          "group": "io.github.mikethomsen",
           "artifact": "nifi-cql-nar",
-          "version": "2.12.0"
+          "version": "1.0.0"
         },
         "properties": {
           "Cassandra Connection Provider": "aa0de332-491f-53f9-b8cf-d812d6dcc792",
@@ -231,11 +231,11 @@
           "x": 400.0,
           "y": 220.0
         },
-        "type": "org.apache.nifi.processors.cql.ExecuteCQL",
+        "type": "io.github.mikethomsen.nifi.cql.processors.ExecuteCQL",
         "bundle": {
-          "group": "org.apache.nifi",
+          "group": "io.github.mikethomsen",
           "artifact": "nifi-cql-nar",
-          "version": "2.12.0"
+          "version": "1.0.0"
         },
         "properties": {
           "Cassandra Connection Provider": "aa0de332-491f-53f9-b8cf-d812d6dcc792",
@@ -389,11 +389,11 @@
           "x": 400.0,
           "y": 440.0
         },
-        "type": "org.apache.nifi.processors.cql.ExecuteCQL",
+        "type": "io.github.mikethomsen.nifi.cql.processors.ExecuteCQL",
         "bundle": {
-          "group": "org.apache.nifi",
+          "group": "io.github.mikethomsen",
           "artifact": "nifi-cql-nar",
-          "version": "2.12.0"
+          "version": "1.0.0"
         },
         "properties": {
           "Cassandra Connection Provider": "aa0de332-491f-53f9-b8cf-d812d6dcc792",
@@ -531,11 +531,11 @@
           "x": 400.0,
           "y": 660.0
         },
-        "type": "org.apache.nifi.processors.cql.ExecuteCQL",
+        "type": "io.github.mikethomsen.nifi.cql.processors.ExecuteCQL",
         "bundle": {
-          "group": "org.apache.nifi",
+          "group": "io.github.mikethomsen",
           "artifact": "nifi-cql-nar",
-          "version": "2.12.0"
+          "version": "1.0.0"
         },
         "properties": {
           "Cassandra Connection Provider": "aa0de332-491f-53f9-b8cf-d812d6dcc792",
@@ -665,11 +665,11 @@
           "x": 400.0,
           "y": 880.0
         },
-        "type": "org.apache.nifi.processors.cql.ExecuteCQL",
+        "type": "io.github.mikethomsen.nifi.cql.processors.ExecuteCQL",
         "bundle": {
-          "group": "org.apache.nifi",
+          "group": "io.github.mikethomsen",
           "artifact": "nifi-cql-nar",
-          "version": "2.12.0"
+          "version": "1.0.0"
         },
         "properties": {
           "Cassandra Connection Provider": "aa0de332-491f-53f9-b8cf-d812d6dcc792",
@@ -736,11 +736,11 @@
           "x": 400.0,
           "y": 1100.0
         },
-        "type": "org.apache.nifi.processors.cql.ExecuteCQL",
+        "type": "io.github.mikethomsen.nifi.cql.processors.ExecuteCQL",
         "bundle": {
-          "group": "org.apache.nifi",
+          "group": "io.github.mikethomsen",
           "artifact": "nifi-cql-nar",
-          "version": "2.12.0"
+          "version": "1.0.0"
         },
         "properties": {
           "Cassandra Connection Provider": "aa0de332-491f-53f9-b8cf-d812d6dcc792",
@@ -941,11 +941,11 @@
           "x": 400.0,
           "y": 1320.0
         },
-        "type": "org.apache.nifi.processors.cql.ExecuteCQL",
+        "type": "io.github.mikethomsen.nifi.cql.processors.ExecuteCQL",
         "bundle": {
-          "group": "org.apache.nifi",
+          "group": "io.github.mikethomsen",
           "artifact": "nifi-cql-nar",
-          "version": "2.12.0"
+          "version": "1.0.0"
         },
         "properties": {
           "Cassandra Connection Provider": "aa0de332-491f-53f9-b8cf-d812d6dcc792",
@@ -1091,11 +1091,11 @@
           "x": 400.0,
           "y": 1540.0
         },
-        "type": "org.apache.nifi.processors.cql.ExecuteCQL",
+        "type": "io.github.mikethomsen.nifi.cql.processors.ExecuteCQL",
         "bundle": {
-          "group": "org.apache.nifi",
+          "group": "io.github.mikethomsen",
           "artifact": "nifi-cql-nar",
-          "version": "2.12.0"
+          "version": "1.0.0"
         },
         "properties": {
           "Cassandra Connection Provider": "aa0de332-491f-53f9-b8cf-d812d6dcc792",
@@ -1247,11 +1247,11 @@
         "instanceIdentifier": "112ef826-6623-5722-bbd0-08dd6791d9ee",
         "name": "ScyllaDBCQLExecutionService",
         "comments": "",
-        "type": "org.apache.nifi.service.scylladb.ScyllaDBCQLExecutionService",
+        "type": "io.github.mikethomsen.nifi.cql.scylladb.ScyllaDBCQLExecutionService",
         "bundle": {
-          "group": "org.apache.nifi",
+          "group": "io.github.mikethomsen",
           "artifact": "nifi-scylladb-session-provider-service-nar",
-          "version": "2.12.0"
+          "version": "1.0.0"
         },
         "properties": {
           "Cassandra Datacenter": "#{CQL_DATACENTER}",
@@ -1369,11 +1369,11 @@
         },
         "controllerServiceApis": [
           {
-            "type": "org.apache.nifi.service.cql.api.service.CQLExecutionService",
+            "type": "io.github.mikethomsen.nifi.cql.api.service.CQLExecutionService",
             "bundle": {
-              "group": "org.apache.nifi",
+              "group": "io.github.mikethomsen",
               "artifact": "nifi-cql-services-api-nar",
-              "version": "2.12.0"
+              "version": "1.0.0"
             }
           }
         ],
