@@ -1,0 +1,28 @@
+{
+  "chat_id": "817abdde-73e8-40f0-b265-a1099ed260e4",
+  "created_at": 1786347000000,
+  "chat_name": "Atlas Cutover Squad",
+  "participants": [
+    {
+      "user_id": "fec4d4da-5ace-4b1f-9af0-665b076effd5",
+      "authenticator": "google-oauth2",
+      "principal": "priya.deshmukh",
+      "joined_at": 1786347000000
+    },
+    {
+      "user_id": "556852d7-5d43-479a-856c-f5b9565396ca",
+      "authenticator": "saml",
+      "principal": "dramirez@example.com",
+      "joined_at": 1786347150000
+    },
+    {
+      "user_id": "e021d215-bbdc-4ed9-b79c-efb03903e0c2",
+      "authenticator": "okta-saml",
+      "principal": "jordan.kim",
+      "joined_at": 1786347300000
+    }
+  ],
+  "sent_at": 1786550223000,
+  "sender_id": "fec4d4da-5ace-4b1f-9af0-665b076effd5",
+  "body": "couldn't have caught half of this without you two either"
+}

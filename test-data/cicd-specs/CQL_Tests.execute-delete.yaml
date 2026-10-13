@@ -1,0 +1,147 @@
+# ExecuteCQL DELETE: removes only the targeted row and refuses unsafe statements.
+#
+# Drives the ExecuteCQL processor through nifi-cicd-test-runner against the local nifi-scylla
+# container. All of these specs share one flow, CQL_Tests.ExecuteCQL_Test.json, which has an input
+# port per statement (In_Insert, In_Lookup, In_Update, In_Delete, ...) and an output port per
+# statement. Row data travels in FlowFile attributes (item_id, item_name, item_quantity), which the
+# flow's cql.arg.N properties bind to the statement.
+#
+# Writes go only to nifi_test.cicd_scratch (cql-schemas/cicd_scratch.cql, create it once). Each case
+# uses its own item_id and the spec deletes what it created, so the specs can run in any order and be
+# repeated.
+#
+# A statement that fails or needs a retry ends at the flow's Failure port. That port is listed under
+# failurePorts, so an unexpected failure fails the case; the cases that expect one say so with
+# failurePort: Failure.
+#
+#   In_Statement          A DELETE processor whose statement comes from the cql_statement
+#                         attribute. Because that is Expression Language, nothing can check it
+#                         before the flow runs, so these cases show validateStatement refusing
+#                         the statement at run time and routing the FlowFile to Failure.
+#
+# CQL_PASSWORD is the only parameter the export omits. The value below matches the local nifi-scylla
+# container; in CI, replace the parameters block with a parameterProviders entry (see
+# CQL_Tests.throughput-put.yaml).
+#
+# Run (from the test-data directory):
+#
+#   java -jar nifi-cicd-test-runner.jar run \
+#       --spec cicd-specs/CQL_Tests.execute-delete.yaml --nar-dir <nar-dir>
+
+flow: ../nifi-flows/CQL_Tests.ExecuteCQL_Test.json
+
+failurePorts: [Failure]
+
+nars:
+  - org.apache.nifi:nifi-standard-nar:2.12.0
+  - io.github.mikethomsen:nifi-cql-nar:1.0.0
+  - io.github.mikethomsen:nifi-scylladb-session-provider-service-nar:1.0.0
+
+parameters:
+  Cassandra Context:
+    CQL_PASSWORD: cassandra
+
+cases:
+  - name: seed first item
+    input:
+      port: In_Insert
+      text: "{}"
+      attributes: { item_id: cicd-delete-a, item_name: doomed, item_quantity: "1" }
+    expect:
+      output:
+        port: Out_Insert
+        count: 1
+      counters:
+        insert_applied_true: 1
+  - name: seed second item
+    input:
+      port: In_Insert
+      text: "{}"
+      attributes: { item_id: cicd-delete-b, item_name: survivor, item_quantity: "2" }
+    expect:
+      output:
+        port: Out_Insert
+        count: 1
+      counters:
+        insert_applied_true: 1
+  - name: delete the first item
+    input:
+      port: In_Delete
+      text: "{}"
+      attributes: { item_id: cicd-delete-a }
+    expect:
+      output:
+        port: Out_Delete
+        count: 1
+      counters:
+        delete_applied_true: 1
+  - name: deleted item is gone
+    input:
+      port: In_Lookup
+      text: "{}"
+      attributes: { item_id: cicd-delete-a }
+    expect:
+      output:
+        port: Out_Lookup
+        count: 0
+      counters:
+        lookup_rows: 0
+  - name: other item is untouched
+    input:
+      port: In_Lookup
+      text: "{}"
+      attributes: { item_id: cicd-delete-b }
+    expect:
+      output:
+        port: Out_Lookup
+        count: 1
+        contains: '"name":"survivor"'
+      counters:
+        lookup_rows: 1
+  - name: a delete with no WHERE clause is refused
+    input:
+      port: In_Statement
+      text: "{}"
+      attributes:
+        cql_statement: "DELETE FROM nifi_test.cicd_scratch"
+    expect:
+      failurePort: Failure
+  - name: a statement of the wrong type is refused
+    input:
+      port: In_Statement
+      text: "{}"
+      attributes:
+        cql_statement: "UPDATE nifi_test.cicd_scratch SET quantity = 0 WHERE item_id = 'cicd-delete-b'"
+    expect:
+      failurePort: Failure
+  - name: a delete from a missing table is refused
+    input:
+      port: In_Statement
+      text: "{}"
+      attributes:
+        cql_statement: "DELETE FROM nifi_test.no_such_table WHERE item_id = 'x'"
+    expect:
+      failurePort: Failure
+  - name: refused deletes left the data alone
+    input:
+      port: In_Lookup
+      text: "{}"
+      attributes: { item_id: cicd-delete-b }
+    expect:
+      output:
+        port: Out_Lookup
+        count: 1
+        contains: '"quantity":2'
+      counters:
+        lookup_rows: 1
+  - name: clean up cicd-delete-b
+    input:
+      port: In_Delete
+      text: "{}"
+      attributes: { item_id: cicd-delete-b }
+    expect:
+      output:
+        port: Out_Delete
+        count: 1
+      counters:
+        delete_applied_true: 1

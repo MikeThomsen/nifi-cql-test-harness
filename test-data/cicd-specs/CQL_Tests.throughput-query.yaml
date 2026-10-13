@@ -1,0 +1,51 @@
+# Read-path throughput check for the "ExecuteCQLQuery Test" process group, exported on its own
+# as CQL_Tests.ExecuteCQLQuery_Test.json.
+#
+# Split from an earlier combined throughput spec, which exercised two groups of CQL_Tests at
+# once: nifi-cicd-test-runner runs one process group per flow. Run
+# CQL_Tests.throughput-put.yaml first; this spec queries the rows that one writes, so on empty
+# tables loaded_messages stays at zero and the case fails.
+#
+#   loaded_messages   Records returned by ExecuteCQLQueryRecord
+#                     (select * from nifi_test.messages_by_chat). Delta = ${record.count},
+#                     summed over every query run during the window.
+#
+# CQL_PASSWORD is the only parameter the export omits. The value below matches the local
+# nifi-scylla container; in CI, use a parameter provider instead (see the write spec).
+#
+# Run (from the test-data directory):
+#
+#   java -jar nifi-cicd-test-runner.jar run \
+#       --spec cicd-specs/CQL_Tests.throughput-query.yaml --nar-dir <nar-dir>
+
+flow: ../nifi-flows/CQL_Tests.ExecuteCQLQuery_Test.json
+
+nars:
+  - org.apache.nifi:nifi-standard-nar
+  - org.apache.nifi:nifi-update-attribute-nar
+  - org.apache.nifi:nifi-record-serialization-services-nar
+  - org.apache.nifi:nifi-registry-nar
+  - io.github.mikethomsen:nifi-cql-nar:1.0.0
+  - io.github.mikethomsen:nifi-scylladb-session-provider-service-nar:1.0.0
+
+parameters:
+  Cassandra Context:
+    CQL_PASSWORD: cassandra
+
+# Hold the engine open for 35 seconds measured from flow-up.
+minRuntime: 30 sec
+minRuntimeGrace: 5 sec
+
+# Let one trigger draw in a batch rather than the default single FlowFile.
+transactionThresholds:
+  flowfiles: 120
+  time: 30 sec
+
+cases:
+  # repeatFor keeps triggering for the whole window.
+  - name: sustained CQL read throughput
+    repeatFor: 30 sec
+    expect:
+      counters:
+        loaded_messages:
+          atLeast: 6000

@@ -1,0 +1,97 @@
+# ExecuteCQL SELECT: a bulk read of every message and aggregate queries over them.
+#
+# Drives the ExecuteCQL processor through nifi-cicd-test-runner against the local nifi-scylla
+# container. All of these specs share one flow, CQL_Tests.ExecuteCQL_Test.json, which has an input
+# port per statement (In_Insert, In_Lookup, In_Update, In_Delete, ...) and an output port per
+# statement. Row data travels in FlowFile attributes (item_id, item_name, item_quantity), which the
+# flow's cql.arg.N properties bind to the statement.
+#
+# Writes go only to nifi_test.cicd_scratch (cql-schemas/cicd_scratch.cql, create it once). Each case
+# uses its own item_id and the spec deletes what it created, so the specs can run in any order and be
+# repeated.
+#
+# A statement that fails or needs a retry ends at the flow's Failure port. That port is listed under
+# failurePorts, so an unexpected failure fails the case; the cases that expect one say so with
+# failurePort: Failure.
+#
+# Reads nifi_test.messages_by_chat, which is loaded from message-conversations (6,387 rows at the
+# time of writing) and grown by the write throughput spec, so the bounds are floors, not exact.
+#
+#   bulk_rows           Records from SELECT * with Rows Per FlowFile = 500, Fetch Size = 1000 and
+#                       Minimum FlowFiles Queued = 0 (the whole result is retrieved before any
+#                       FlowFile is sent).
+#   bulk_flowfiles      FlowFiles that SELECT produced: at least 6,000 rows / 500 per FlowFile = 12.
+#   aggregate_chats     Rows from a server-side GROUP BY on the partition key: one per chat. There
+#                       are 8 chats, so this must be exactly 8, whatever the message count.
+#   aggregate_days      Rows from GROUP BY msg_date within one chat, using a bound chat_id.
+#
+# CQL_PASSWORD is the only parameter the export omits. The value below matches the local nifi-scylla
+# container; in CI, replace the parameters block with a parameterProviders entry (see
+# CQL_Tests.throughput-put.yaml).
+#
+# Run (from the test-data directory):
+#
+#   java -jar nifi-cicd-test-runner.jar run \
+#       --spec cicd-specs/CQL_Tests.execute-select.yaml --nar-dir <nar-dir>
+
+flow: ../nifi-flows/CQL_Tests.ExecuteCQL_Test.json
+
+failurePorts: [Failure]
+
+nars:
+  - org.apache.nifi:nifi-standard-nar:2.12.0
+  - io.github.mikethomsen:nifi-cql-nar:1.0.0
+  - io.github.mikethomsen:nifi-scylladb-session-provider-service-nar:1.0.0
+
+parameters:
+  Cassandra Context:
+    CQL_PASSWORD: cassandra
+
+cases:
+  - name: bulk select of every message
+    input:
+      port: In_BulkSelect
+      text: "{}"
+      attributes: {}
+    expect:
+      output:
+        port: Out_BulkSelect
+      counters:
+        bulk_rows: { atLeast: 6000 }
+        bulk_flowfiles: { atLeast: 12 }
+  - name: message count per chat
+    input:
+      port: In_Aggregate
+      text: "{}"
+      attributes: {}
+    expect:
+      output:
+        port: Out_Aggregate
+        count: 1
+        contains: 'e193ed8c-3688-452b-b6ca-10ebbe1c9f12'
+      counters:
+        aggregate_chats: 8
+  - name: first and last message per chat are reported
+    input:
+      port: In_Aggregate
+      text: "{}"
+      attributes: {}
+    expect:
+      output:
+        port: Out_Aggregate
+        count: 1
+        contains: '"first_message_at"'
+      counters:
+        aggregate_chats: 8
+  - name: message count per day for one chat
+    input:
+      port: In_AggregateDaily
+      text: "{}"
+      attributes: { chat_id: 817abdde-73e8-40f0-b265-a1099ed260e4 }
+    expect:
+      output:
+        port: Out_AggregateDaily
+        count: 1
+        contains: '2026-08-10'
+      counters:
+        aggregate_days: { atLeast: 4 }

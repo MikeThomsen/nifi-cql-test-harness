@@ -1,0 +1,22 @@
+{
+  "chat_id": "f8aef625-e983-4d81-8a01-1bc62d34b04d",
+  "created_at": 1780299000000,
+  "chat_name": "Launch Squad",
+  "participants": [
+    {
+      "user_id": "6dfeb35b-b5d7-4344-b72f-d78f89b39cd5",
+      "authenticator": "okta-saml",
+      "principal": "sam.oyelaran",
+      "joined_at": 1780299000000
+    },
+    {
+      "user_id": "73cc593f-28cf-4747-a97d-7ab3a066c6b6",
+      "authenticator": "saml",
+      "principal": "sana.iqbal@example.com",
+      "joined_at": 1780299150000
+    }
+  ],
+  "sent_at": 1782466683000,
+  "sender_id": "6dfeb35b-b5d7-4344-b72f-d78f89b39cd5",
+  "body": "dana signed off on the dry run recording too, no notes"
+}
